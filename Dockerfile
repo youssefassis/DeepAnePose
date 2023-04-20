@@ -4,7 +4,7 @@ FROM pytorch/pytorch:1.10.0-cuda11.3-cudnn8-runtime
 # edit these
 ENV NB_USER username
 ENV GROUP groupname
-ENV PYTHONPATH="${PYTHONPATH}:/path/to/poseaneurysm/dataStrategy:/path/to/poseaneurysm/models:/path/to/poseaneurysm/ressources"
+ENV PYTHONPATH="${PYTHONPATH}:/path/to/poseaneurysm/dataStrategy:/path/to/poseaneurysm/models:/path/to/poseaneurysm/resources"
 
 ENV HOME /home/${NB_USER}
 
