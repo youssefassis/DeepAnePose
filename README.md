@@ -122,6 +122,13 @@ To start (or resume) the training phase, we will use the "[train.py](https://git
     python resources/scripts/evaluate.py path/to/Train001
     ```
     After running the evaluation script, the results will be generated are generated as a PNG figure that summarizes the performance of the model based on multiple metrics (pose estimation and object detection). The figure can be found in the "path/to/Train001/Predictions/**Evaluation\@0.1.png**" directory.
+    
+    <img 
+       src="Images/Evaluation_0.1.png"
+       alt="Evaluation summary as a figure"
+       title="Example of the generated evaluation figure"
+    /> 
+
 
 # Citation
 If you find this repository useful in your research, please consider citing:
