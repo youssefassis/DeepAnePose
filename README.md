@@ -25,13 +25,6 @@ To simplify the placement of the two points in the volume rendering view, we dev
     /> 
 </p>
 
-
-# Reproductibity
-To ensure the reproducibility of our work, we have made the annotations of the subjects used in dataset [3] accessible at 
-'[reproducibility/Annotations](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility/Annotations)'. Each subject file contains the precise annotation of aneurysms, represented by two points with 3D coordinates (x, y, z).
-
-Furthermore, to replicate the 5-fold cross-validation methodology used in our experimental study, the subjects utilized in each fold can be found at '[reproducibility/Fold?.json](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility)", where "?" represents the specific fold number. Each file contains the list of training and test subjects.
-
 # Project Description
 The project is structured into two main directories: "Data_dir" and "Work_dir". The "Data_dir" contains patient-related (subjects) data (e.g., P0001, P0002, etc.), while the "Work_dir" serves as the working directory and houses training samples for custom training, labeled as Train001, Train002, and so on.
 
@@ -129,6 +122,12 @@ To start (or resume) the training phase, we will use the "[train.py](https://git
        title="Example of the generated evaluation figure"
     /> 
 
+
+# Reproductibity
+To ensure the reproducibility of our work, we have made the annotations of the subjects used in dataset [3] accessible at 
+'[reproducibility/Annotations](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility/Annotations)'. Each subject file contains the precise annotation of aneurysms, represented by two points with 3D coordinates (x, y, z).
+
+Furthermore, to replicate the 5-fold cross-validation methodology used in our experimental study, the subjects utilized in each fold can be found at '[reproducibility/Fold?.json](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility)", where "?" represents the specific fold number. Each file contains the list of training and test subjects.
 
 # Citation
 If you find this repository useful in your research, please consider citing:
