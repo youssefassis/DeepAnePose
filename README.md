@@ -5,21 +5,23 @@ This repository contains the official software code related to the paper titled 
 The diagnosis of unruptured intracranial aneurysms from time-of-flight Magnetic Resonance Angiography (TOF-MRA) images is a challenging clinical problem that is extremely difficult to automate. We propose to go beyond the mere detection of each aneurysm and also estimate its size and the orientation of its main axis for an immediate visualization in appropriate reformatted cut planes. To address this issue, and inspired by the idea behind YOLO architecture, a novel one-stage deep learning approach is described to simultaneously estimate the localization, size and orientation of each aneurysm in 3D images. It combines fast and approximate annotation, data sampling and generation to tackle the class imbalance problem, and a cosine similarity loss to optimize the orientation. We evaluate our approach on two large datasets containing 416 patients with 317 aneurysms using a 5-fold cross-validation scheme. Our method achieves a median localization error of 0.48 mm and a median 3D orientation error of 12.27 degrees, demonstrating an accurate localization of aneurysms and an orientation estimation that comply with clinical practice. Further evaluation is performed in a more classical detection setting to compare with state-of-the-art nnDetecton[1] and nnUNet[2] methods. Competitive performance is reported with an average precision of 76.60%, a sensitivity score of 82.93%, and 0.44 false positives per case.
 
 # Visual Results
-Some qualitative results of our method on dataset [3]: predicted (blue) and GT (green) markups. Each reformatted cut plane was determined by rotating around the aneurysm axis passing through the predicted markups.
+Some qualitative results of our method on dataset [3]: predicted (blue) and GT (green) markups. Each reformatted cut plane was determined by rotating around the aneurysm axis passing through the predicted markups. The following 3D slicer extension is developed and used to visualise these results: https://gitlab.inria.fr/yassis/slicer-reformat-aneurysm. 
 
 <img
   src="Images/examples.jpg"
   alt="Visual results">
 
 # Annotation 
-To address the limitations associated with voxel-wise annotation, a weak annotation approach is employed for aneurysm labeling. This method entails approximating the aneurysm shape by utilizing spheres. As depicted in the figure below, the creation of these spheres involves the utilization of two reference points: the center of the aneurysm neck (P1) and the aneurysm dome (P2). Guided by these two points, a sphere is generated to approximate the aneurysm volume.
+To address the limitations associated with voxel-wise annotation, a weak annotation approach is employed for aneurysm labeling. This method entails approximating the aneurysm shape by utilizing spheres. As depicted in the figure below, the creation of these spheres involves the utilization of two reference points: the center of the aneurysm neck (P1) and the aneurysm dome (P2). Guided by these two points, a sphere is generated to approximate the aneurysm volume. 
+
+To simplify the placement of the two points in the volume rendering view, we developed a Python extension for the 3D Slicer software, which provides a real-time visualization of the sphere in the canonical cut planes: https://gitlab.inria.fr/yassis/slicer-sphere-annotation.
 
 <p align="center" width="100%">
     <img 
        src="Images/annotation_draw.png"
        alt="Our adopted annotation"
        title="Fast aneurysm annotation: 2 points (P1, P2) approximate the aneurysm with a sphere"
-        width="20%" 
+        width="25%" 
     /> 
 </p>
 
