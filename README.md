@@ -19,7 +19,7 @@ To address the limitations associated with voxel-wise annotation, a weak annotat
        src="Images/annotation_draw.png"
        alt="Our adopted annotation"
        title="Fast aneurysm annotation: 2 points (P1, P2) approximate the aneurysm with a sphere"
-        width="40%" 
+        width="20%" 
     /> 
 </p>
 
