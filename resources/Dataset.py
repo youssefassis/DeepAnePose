@@ -174,8 +174,8 @@ def get_truth_from_aneurysms(points, scales, dim):
     '''
     points = points / dim
     targets = [[np.zeros((S, S, S, 1), dtype='float32'), np.zeros((S, S, S, 3), dtype='float32'), np.zeros((S, S, S, 3), dtype='float32') ]  for S in scales]
-    for idx in range(0, points.shape[0], 2):
-        p1, p2 = points[idx], points[idx + 1]
+    for idx_pt in range(0, points.shape[0], 2):
+        p1, p2 = points[idx_pt], points[idx_pt + 1]
         center = (p1 + p2) / 2
         x, y, z = center
         for idx, S in enumerate(scales):
