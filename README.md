@@ -16,14 +16,13 @@ To address the limitations associated with voxel-wise annotation, a weak annotat
 
 To simplify the placement of the two points in the volume rendering view, we developed a Python extension for the 3D Slicer software, which provides a real-time visualization of the sphere in the canonical cut planes: https://gitlab.inria.fr/yassis/slicer-sphere-annotation.
 
-<p align="center" width="100%">
-    <img 
-       src="Images/annotation_draw.png"
-       alt="Our adopted annotation"
-       title="Fast aneurysm annotation: 2 points (P1, P2) approximate the aneurysm with a sphere"
-        width="25%" 
-    /> 
-</p>
+<div align="center">
+    <img src="Images/annotation_draw.png"
+         alt="Our adopted annotation"
+         title="Fast aneurysm annotation: 2 points (P1, P2) approximate the aneurysm with a sphere"
+         width="30%">
+</div>
+
 
 # Project Description
 The project is structured into two main directories: "Data_dir" and "Work_dir". The "Data_dir" contains patient-related (subjects) data (e.g., P0001, P0002, etc.), while the "Work_dir" serves as the working directory and houses training samples for custom training, labeled as Train001, Train002, and so on.
@@ -132,7 +131,23 @@ Furthermore, to replicate the 5-fold cross-validation methodology used in our ex
 # Citation
 If you find this repository useful in your research, please consider citing:
 ```
-Assis et al. Aneurysm Pose Estimation with Deep Learning, In: International Conference on Medical Image Computing and Computer-Assisted Intervention, Springer (2023)
+@inproceedings{assis2023aneurysm,
+  title={Aneurysm Pose Estimation with Deep Learning},
+  author={Assis, Youssef and Liao, Liang and Pierre, Fabien and Anxionnat, Ren{\'e} and Kerrien, Erwan},
+  booktitle={International Conference on Medical Image Computing and Computer-Assisted Intervention},
+  pages={543--553},
+  year={2023},
+  organization={Springer}
+}
+
+@inproceedings{assis2021efficient,
+  title={An efficient data strategy for the detection of brain aneurysms from MRA with deep learning},
+  author={Assis, Youssef and Liao, Liang and Pierre, Fabien and Anxionnat, Ren{\'e} and Kerrien, Erwan},
+  booktitle={Deep Generative Models, and Data Augmentation, Labelling, and Imperfections: First Workshop, DGM4MICCAI 2021, and First Workshop, DALI 2021, Held in Conjunction with MICCAI 2021, Strasbourg, France, October 1, 2021, Proceedings 1},
+  pages={226--234},
+  year={2021},
+  organization={Springer}
+}
 ```
 
 # References
