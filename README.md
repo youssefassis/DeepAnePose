@@ -20,7 +20,7 @@ To simplify the placement of the two points in the volume rendering view, we dev
     <img src="Images/annotation_draw.png"
          alt="Our adopted annotation"
          title="Fast aneurysm annotation: 2 points (P1, P2) approximate the aneurysm with a sphere"
-         width="30%">
+         width="25%">
 </div>
 
 
@@ -124,7 +124,10 @@ To start (or resume) the training phase, we will use the "[train.py](https://git
 
 # Reproductibity
 To ensure the reproducibility of our work, we have made the annotations of the subjects used in dataset [3] accessible at 
-'[reproducibility/Annotations](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility/Annotations)'. Each subject file contains the precise annotation of aneurysms, represented by two points with 3D coordinates (x, y, z).
+'[reproducibility/Annotations](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility/Annotations)'. 
+Each subject file contains the aneurysms annotation, represented by two points (P1, P2) with 3D coordinates (x, y, z).
+Note that the subjects of dataset [3] can be downloaded from : https://openneuro.org/datasets/ds003949/ .
+
 
 Furthermore, to replicate the 5-fold cross-validation methodology used in our experimental study, the subjects utilized in each fold can be found at '[reproducibility/Fold?.json](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility)", where "?" represents the specific fold number. Each file contains the list of training and test subjects.
 
