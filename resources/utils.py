@@ -39,7 +39,7 @@ def select_model(config, logger):
         model = YOLO_Orientation(in_channels=config['in_channels'], f_maps=config['n_base_filters'], 
                                  layer_order=config["layer_order"], pool_type=pool_type, num_levels= config['depth'],
                                  conv_kernel_size=3, pool_kernel_size=2, conv_padding=1, basic_module=basic_module, 
-                                 params_per_box=nb_params,  nb_scales=len(config['scales']))
+                                 params_per_element=nb_params,  nb_scales=len(config['scales']))
     else:
         raise ValueError(f"Unsupported model '{config['model']}'")
     logger.info(f"The model '{config['model']}' is selected")
@@ -50,7 +50,7 @@ def load_model(config, device="cpu", last=False):
     Instansiate and load the appropriate (Last or Best) model weights
     '''
     # Instantiate model
-    model = get_model(config, device=device, is_testing=True)
+    model = get_model(config, device=device)#, is_testing=True)
     if last is None:
         return model, 0
 
@@ -107,7 +107,7 @@ def load_checkpoint(checkpoint_path, model, optimizer=None,
     if not os.path.exists(checkpoint_path):
         raise IOError(f"Checkpoint '{checkpoint_path}' does not exist")
 
-    state = torch.load(checkpoint_path, map_location='cpu')
+    state = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
     model.load_state_dict(state[model_key])
 
     if optimizer is not None:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, json, torch
+import os, sys, json, torch, math
 import Data.IO as dio
 from utils import get_logger, load_model
 from prediction import ndl_run_validation_cases
@@ -8,6 +8,8 @@ def main():
     try:
         with open(os.path.join(sys.argv[1], 'ndl_config.json'), 'r') as f:
             config = json.load(f)
+        if not 'scales' in config:
+            config['scales'] = [math.ceil(x/8) for x in config['patch_shape']]
     except:
         print(f'No such Training config file')
         exit()
@@ -51,7 +53,7 @@ def main():
                                  mirror_axes=[0, 1, 2],
                                  batch_size = 1,
                                  do_tta = True,
-                                 pts_aneurysm=config['truth file'],
+                                # pts_aneurysm=config['truth file'],
                                  iou_threshold=iou_threshold,
                                  detections_per_patch = detections_per_patch,
                                 )

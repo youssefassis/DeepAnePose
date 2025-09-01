@@ -142,7 +142,7 @@ def removeSkullMask(vol,percent=80):
     # erode this mask to remove the skull
     selem=getBall(2)
     for _ in range(15):
-        mask=skim.binary_erosion(mask,selem=selem).astype(np.uint8)
+        mask=skim.binary_erosion(mask,footprint=selem).astype(np.uint8)
     # return this mask
     return mask
 

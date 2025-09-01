@@ -52,7 +52,7 @@ def cells_to_spheres(predictions, obj_thresh, input_shape):
     '''
     spheres = []
     predictions = predictions if type(predictions) is np.ndarray else predictions.numpy()
-    grid_h, grid_w, grid_d = predictions.shape[0:3] if nb_anchors == 1 else predictions.shape[1:4]
+    grid_h, grid_w, grid_d = predictions.shape[0:3] #if nb_anchors == 1 else predictions.shape[1:4]
 
     predictions[..., -1:] = torch.sigmoid(torch.from_numpy(predictions[..., -1:])).numpy() # normalize confidence scores [0,1]
     predictions[..., 0:3] = torch.sigmoid(torch.from_numpy(predictions[..., 0:3])).numpy() # x y z 's center coords [0, 1]
@@ -192,13 +192,13 @@ def keep_only_intersected_spheres(spheres1, spheres2, min_iou_threshold):
     return non_max_suppression(sorted(results, key=lambda x: x[-1], reverse=True), iou_threshold=min_iou_threshold )
 
 def spheres_to_metric (spheres, v2m):
-    ''''
+    '''
     This is a Python function that transforms a list of sphere coordinates 
     from voxel space to metric space using an affine transformation matrix. 
     The function takes in two arguments: spheres, which is a list of sphere 
     coordinates in voxel space, and v2m, which is a 4x4 affine transformation 
     matrix that converts voxel coordinates to metric coordinates.
-    ''''
+    '''
     def apply_transormation(elements, trans):
         return apply_affine (trans, elements)
     assert isinstance(spheres, list)
