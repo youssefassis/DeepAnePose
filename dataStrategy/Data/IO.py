@@ -89,6 +89,9 @@ def points_to_spheres(p):
     returns: a list of N/2 x 4 values: the first 3 values are the center of each segment (i.e. center of the sphere),
              and the 4th value is its half-length (i.e. radius of the sphere)
     '''
+    if p is None or len(p) == 0:
+        return np.empty((0,3))
+
     if p.shape[1] != 3:
         raise ValueError('Input array must be a list of 3D points')
     if p.shape[0]%2 != 0:
