@@ -1,12 +1,13 @@
-FROM nvidia/cuda:11.6.0-base-ubuntu20.04
+#FROM nvidia/cuda:11.6.0-base-ubuntu20.04
+FROM nvidia/cuda:12.9.0-cudnn-runtime-ubuntu22.04
 FROM pytorch/pytorch:1.10.0-cuda11.3-cudnn8-runtime
 
 # edit these
-ENV NB_USER username
-ENV GROUP groupname
-ENV PYTHONPATH="${PYTHONPATH}:/path/to/poseaneurysm/dataStrategy:/path/to/poseaneurysm/models:/path/to/poseaneurysm/resources"
-
+ENV NB_USER kerrien
+ENV GROUP tangram
 ENV HOME /home/${NB_USER}
+ENV PYTHONPATH="${PYTHONPATH}:${HOME}/data/git/DeepAnePose/dataStrategy:${HOME}/data/git/DeepAnePose/models:${HOME}/data/git/DeepAnePose/resources"
+
 
 WORKDIR ${HOME}
 COPY ./requirements.txt requirements.txt
@@ -28,4 +29,4 @@ USER ${NB_USER}
 
 EXPOSE 5000
 VOLUME ${HOME}
-CMD ["jupyter", "lab"]
+#CMD ["jupyter", "lab"]
