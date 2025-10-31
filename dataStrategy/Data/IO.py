@@ -310,7 +310,7 @@ def extractPointsFromPatient(patient, r=20, nbPoints=100, outfile="points.csv", 
     q = None
     if randomPoints:
         minThreshold, maxThreshold = np.percentile(vol[vol>0], 0), np.percentile(vol[vol>0], 100)
-        print(f'\Random Points ', end='')
+        print(f'Random Points ', end='')
         p=selectPoints(vol, vox2met, thresLow=minThreshold, thresHigh=maxThreshold, r=r,
                              fPoints=fp, nbPoints=nbPoints, extractType='Parenchyma')
         print(f'{len(p)} random points')
