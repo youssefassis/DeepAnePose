@@ -1,3 +1,0 @@
-id,x,y,z,ow,ox,oy,oz,vis,sel,lock,label,desc,associatedNodeID,,
-vtkMRMLMarkupsFiducialNode_0,-1.0662047744442025,31.655060791879812,6.020991939782349,0,0,0,1,1,1,0,F-1,nan,vtkMRMLScalarVolumeNode1,2,0
-vtkMRMLMarkupsFiducialNode_1,0.5615111886153595,37.66029734060368,7.388277848020976,0,0,0,1,1,1,0,F-2,nan,vtkMRMLScalarVolumeNode1,2,0
