@@ -68,7 +68,6 @@ def read_points_from_csv(fname, nb = None):
     '''
     returns a list of points, read from a csv file. Coordinates are stored in columns named 'x', 'y' and 'z'
     '''
-    assert os.path.isfile(fname), f"CSV file not found {fname}"
     try:
         try:
             d = pd.read_csv(fname, usecols = ['x','y','z', 'type'])
