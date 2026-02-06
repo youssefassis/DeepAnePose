@@ -12,8 +12,6 @@ def main():
     
     config["volume"] = "init volume"
     
-    config["anchors"] = None
-    config["scales"] = [12]
     config["normalize"] = "Normal"
     config["patch_shape"] = [96, 96, 96]
     config["patch_size"] = [0.4, 0.4, 0.4]

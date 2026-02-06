@@ -199,10 +199,10 @@ def spheres_to_metric (spheres, v2m):
     coordinates in voxel space, and v2m, which is a 4x4 affine transformation 
     matrix that converts voxel coordinates to metric coordinates.
     '''
-    def apply_transormation(elements, trans):
+    def apply_transformation(elements, trans):
         return apply_affine (trans, elements)
     assert isinstance(spheres, list)
     for sphere in spheres:
-        sphere[:3] = apply_transormation(np.array(sphere[:3]), v2m.squeeze())
-        sphere[3:6] = apply_transormation(np.array(sphere[3:6]), v2m.squeeze())
+        sphere[:3] = apply_transformation(np.array(sphere[:3]), v2m.squeeze())
+        sphere[3:6] = apply_transformation(np.array(sphere[3:6]), v2m.squeeze())
     return spheres
