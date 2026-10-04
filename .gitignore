@@ -1,5 +1,19 @@
-**/.ipynb_checkpoints
-**/__pycache__
-
-.venv/
+__pycache__/
+*.py[cod]
 *.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.DS_Store
+
+# training outputs and medical data
+logs/
+*.pytorch
+*.nii
+*.nii.gz
+*.npy
+*.npz
