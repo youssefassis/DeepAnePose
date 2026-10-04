@@ -64,17 +64,17 @@ To use our code, follow the following steps:
     ```
 3. Generate the "noskull.nii.gz" file: Use the "[removeSkull.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/removeSkull.py).py" file to remove the skull from the patient's data. Execute the following command:
     ```
-    uv run python scripts/remove_skull.py
+    uv run python scripts/remove_skull.py path/to/Data_dir/P*    # or path/to/Data_dir/sub-*/ses-*
     ```
 4. Generate the "points.csv" file: Utilize the "[extractPoints.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/extractPoints.py)" file to extract the relevant negative patches center from each patient's data. Execute the following command:
     ```
-    uv run python scripts/extract_points.py
+    uv run python scripts/extract_points.py path/to/Data_dir/P*
     ```
 
 ### Traning
 1. After creating the patient data, the next step is to generate a customized training sample, such as the "Train001" directory. To accomplish this, edit the "[prepare.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/prepare.py)" file and execute the following command:
    ```
-    uv run python scripts/prepare.py
+    uv run python scripts/prepare.py path/to/Data_dir path/to/Work_dir reproductibility/fold1.json --name Train001
     ```
 2. Once this is done, you will have a configuration file generated in the "Train001/ndl_config.json" location. This configuration file will serve as the basis for training.
 To start (or resume) the training phase, we will use the "[train.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/train.py)" file:
@@ -122,6 +122,10 @@ To ensure the reproducibility of our work, we have made the annotations of the s
 '[reproducibility/Annotations](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility/Annotations)'. 
 Each subject file contains the aneurysms annotation, represented by two points (P1, P2) with 3D coordinates (x, y, z).
 Note that the subjects of dataset [3] can be downloaded from : https://openneuro.org/datasets/ds003949/ .
+To use them for training and evaluation, write them as the "aneurysms.csv" truth file of each patient directory (laid out as `Data_dir/sub-XXX/ses-YYYYMMDD`):
+```
+uv run python scripts/convert_annotations.py reproductibility/Annotations path/to/Data_dir
+```
 
 
 Furthermore, to replicate the 5-fold cross-validation methodology used in our experimental study, the subjects utilized in each fold can be found at '[reproducibility/Fold?.json](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility)", where "?" represents the specific fold number. Each file contains the list of training and test subjects.
