@@ -8,7 +8,7 @@ The diagnosis of unruptured intracranial aneurysms from time-of-flight Magnetic 
 Some qualitative results of our method on dataset [3]: predicted (blue) and GT (green) markups. Each reformatted cut plane was determined by rotating around the aneurysm axis passing through the predicted markups. The following 3D slicer extension is developed and used to visualise these results: https://gitlab.inria.fr/yassis/slicer-reformat-aneurysm. 
 
 <img
-  src="Images/examples.jpg"
+  src="docs/examples.jpg"
   alt="Visual results">
 
 # Annotation 
@@ -17,7 +17,7 @@ To address the limitations associated with voxel-wise annotation, a weak annotat
 To simplify the placement of the two points in the volume rendering view, we developed a Python extension for the 3D Slicer software, which provides a real-time visualization of the sphere in the canonical cut planes: https://gitlab.inria.fr/yassis/slicer-sphere-annotation.
 
 <div align="center">
-    <img src="Images/annotation_draw.png"
+    <img src="docs/annotation_draw.png"
          alt="Our adopted annotation"
          title="Fast aneurysm annotation: 2 points (P1, P2) approximate the aneurysm with a sphere"
          width="25%">
@@ -29,7 +29,7 @@ The project is structured into two main directories: "Data_dir" and "Work_dir". 
 
 In the "Data_dir", each patient's folder consists of multiple files. These include:
 * volume.nii.gz: a 3D MRA image containing the patient's vascular data.
-* aneurysm.csv: a CSV file specifying the 3D coordinates of points (P1, P2) used to annotate each aneurysm within the patient's anatomy. See [examples](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility/Annotations) for dataset [3].
+* aneurysm.csv: a CSV file specifying the 3D coordinates of points (P1, P2) used to annotate each aneurysm within the patient's anatomy. See [examples](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproducibility/annotations) for dataset [3].
 * noskull.nii.gz: a brain volume file excluding the skull. This file can be generated using [this script](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/removeSkull.py), and used to generate "points.csv" files.
 * points.csv: a CSV file listing the center coordinates of candidate negative (aneurysm-free) patches utilized for training. This file can be generated using [this script](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/extractPoints.py).
 * config.json: all the above files are organized and managed through the "config.json" file.
@@ -74,7 +74,7 @@ To use our code, follow the following steps:
 ### Traning
 1. After creating the patient data, the next step is to generate a customized training sample, such as the "Train001" directory. To accomplish this, edit the "[prepare.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/prepare.py)" file and execute the following command:
    ```
-    uv run python scripts/prepare.py path/to/Data_dir path/to/Work_dir reproductibility/fold1.json --name Train001
+    uv run python scripts/prepare.py path/to/Data_dir path/to/Work_dir reproducibility/fold1.json --name Train001
     ```
 2. Once this is done, you will have a configuration file generated in the "Train001/ndl_config.json" location. This configuration file will serve as the basis for training.
 To start (or resume) the training phase, we will use the "[train.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/train.py)" file:
@@ -111,20 +111,20 @@ To start (or resume) the training phase, we will use the "[train.py](https://git
     After running the evaluation script, the results will be generated are generated as a PNG figure that summarizes the performance of the model based on multiple metrics (pose estimation and object detection). The figure can be found in the "path/to/Train001/Predictions/**Evaluation\@0.1.png**" directory.
     
     <img 
-       src="Images/Evaluation_0.1.png"
+       src="docs/evaluation_0.1.png"
        alt="Evaluation summary as a figure"
        title="Example of the generated evaluation figure"
     /> 
 
 
-# Reproductibity
+# Reproducibility
 To ensure the reproducibility of our work, we have made the annotations of the subjects used in dataset [3] accessible at 
-'[reproducibility/Annotations](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproductibility/Annotations)'. 
+'[reproducibility/annotations](https://gitlab.inria.fr/yassis/DeepAnePose/-/tree/main/reproducibility/annotations)'. 
 Each subject file contains the aneurysms annotation, represented by two points (P1, P2) with 3D coordinates (x, y, z).
 Note that the subjects of dataset [3] can be downloaded from : https://openneuro.org/datasets/ds003949/ .
 To use them for training and evaluation, write them as the "aneurysms.csv" truth file of each patient directory (laid out as `Data_dir/sub-XXX/ses-YYYYMMDD`):
 ```
-uv run python scripts/convert_annotations.py reproductibility/Annotations path/to/Data_dir
+uv run python scripts/convert_annotations.py reproducibility/annotations path/to/Data_dir
 ```
 
 
