@@ -1,3 +1,5 @@
+import os
+
 import nibabel as ni
 import numpy as np
 
@@ -20,7 +22,7 @@ def test_extract_points_script_handles_patients_with_and_without_aneurysm(tmp_pa
 
     import extractPoints
 
-    monkeypatch.chdir(tmp_path)  # extractPointsFromPatient changes the working directory
+    monkeypatch.chdir(tmp_path)
     vol = np.random.default_rng(0).random((30, 30, 30)).astype(np.float32)
     for name, has_aneurysm in (("P0001", True), ("P0002", False)):
         patient = tmp_path / "Data" / name
@@ -37,6 +39,7 @@ def test_extract_points_script_handles_patients_with_and_without_aneurysm(tmp_pa
 
     for name in ("P0001", "P0002"):
         assert set(pd.read_csv(tmp_path / "Data" / name / "points.csv")["type"]) == {"Vessel", "Parenchyma"}
+    assert os.getcwd() == str(tmp_path)  # the working directory is left as it was
 
 
 def test_read_points_reports_a_missing_file(tmp_path):
