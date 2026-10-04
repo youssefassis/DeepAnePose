@@ -32,3 +32,9 @@ def test_resumed_training_continues_the_warmup(train, tmp_path):
     resumed = lr(train(n_epochs=2, **warmup))
 
     assert resumed == pytest.approx(uninterrupted)
+
+
+def test_training_on_cpu_does_not_ask_for_cuda(train, recwarn):
+    train(n_epochs=1, mixed_precision=True)
+
+    assert [str(w.message) for w in recwarn if "CUDA" in str(w.message)] == []
