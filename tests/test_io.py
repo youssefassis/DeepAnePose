@@ -33,7 +33,7 @@ def test_extract_points_script_handles_patients_with_and_without_aneurysm(tmp_pa
             (patient / "aneurysm.csv").write_text("x,y,z\n40,40,40\n44,40,40\n")
             config["pts aneurysm"] = "aneurysm.csv"
         (patient / "config.json").write_text(json.dumps(config))
-    monkeypatch.setattr("sys.argv", ["extract_points.py", str(tmp_path / "Data")])
+    monkeypatch.setattr("sys.argv", ["extract_points.py", str(tmp_path / "Data" / "P0001"), str(tmp_path / "Data" / "P0002")])
 
     extract_points.main()
 
