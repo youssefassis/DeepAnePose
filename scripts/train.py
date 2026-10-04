@@ -21,7 +21,7 @@ def main():
 
     # Data Preparation
     ## Load patients
-    train_list, valid_list, _ = readSplit(config['split_file'])
+    train_list, valid_list, _ = readSplit(config['split_file'], config.get('base_dir'))
     ## Load training and validation patches
     train_db = add_points_to_patient_data(read_patient_data_base(pat_list = train_list,
                                                                  volume = config['volume'],
