@@ -154,28 +154,26 @@ def ndl_patch_wise_prediction(device, model, data, patch_shape, iou_threshold, d
         input_shape = list(batch.shape[-3:])
         
         spheres = model(torch.from_numpy(batch).float().to(device))  
-        spheres = [torch.cat((spheres[0][1], spheres[0][2], spheres[0][0]), -1)]
-        
-        boxes = []
-        for i in range(len(spheres)): # scales
-            boxes += cells_to_spheres(spheres[i].squeeze().to('cpu'), obj_thresh = 0.01, input_shape = input_shape)
-            
-        # filter boxes/ patch borders: according to detection center
-        boxes = [box for box in boxes if (box[0] >= margin[0] and box[1] >= margin[1] and box[2] >= margin[2] and  box[0] < margin[0] + delta[0] and box[1] < margin[1] + delta[1] and box[2] < margin[2] + delta[2])]
-        
-        boxes = non_max_suppression(boxes, iou_threshold=iou_threshold)
-        if detections_per_patch is not None: boxes = boxes[:detections_per_patch]
-        
-        # transform coords from patch dimension to the global volume dimension
-        for i in idx: # batch
+        spheres = torch.cat((spheres[0][1], spheres[0][2], spheres[0][0]), -1).to('cpu') # first scale only
+
+        for patch_spheres, origin in zip(spheres, idx): # each patch of the batch
+            boxes = cells_to_spheres(patch_spheres, obj_thresh = 0.01, input_shape = input_shape)
+
+            # filter boxes/ patch borders: according to detection center
+            boxes = [box for box in boxes if (box[0] >= margin[0] and box[1] >= margin[1] and box[2] >= margin[2] and  box[0] < margin[0] + delta[0] and box[1] < margin[1] + delta[1] and box[2] < margin[2] + delta[2])]
+
+            boxes = non_max_suppression(boxes, iou_threshold=iou_threshold)
+            if detections_per_patch is not None: boxes = boxes[:detections_per_patch]
+
+            # transform coords from patch dimension to the global volume dimension
             for box in boxes:
-                box[0] = box[0] + i[0] # x
-                box[1] = box[1] + i[1] # y
-                box[2] = box[2] + i[2] # z
-                
-                box[3] = box[3] + i[0] # x
-                box[4] = box[4] + i[1] # y
-                box[5] = box[5] + i[2] # z
+                box[0] = box[0] + origin[0] # x
+                box[1] = box[1] + origin[1] # y
+                box[2] = box[2] + origin[2] # z
+
+                box[3] = box[3] + origin[0] # x
+                box[4] = box[4] + origin[1] # y
+                box[5] = box[5] + origin[2] # z
             patient_boxes += boxes
 
         loop.set_description(f"{patient_name} ({indices.shape[0]} patches; {len(patient_boxes)} detections)")
