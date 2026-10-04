@@ -1,0 +1,18 @@
+import pytest
+
+
+def lr(trainer):
+    return trainer.optimizer.param_groups[0]["lr"]
+
+
+@pytest.mark.parametrize("schedule", ["Warmup", "WarmupPoly"])
+def test_warmup_starts_below_the_initial_learning_rate(train, schedule):
+    trainer = train(n_epochs=1, lr=schedule, warmEpochs=2, start_epoch=3)  # stops halfway through the warmup
+
+    assert lr(trainer) < 1e-2
+
+
+def test_plateau_schedule_reduces_the_learning_rate(train):
+    trainer = train(n_epochs=2, lr="ReduceLROnPlateau", factor=0.5, patience=1)
+
+    assert lr(trainer) == pytest.approx(0.5e-2)
