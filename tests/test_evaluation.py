@@ -19,7 +19,7 @@ def test_evaluate_script_writes_the_detection_table_and_figure(evaluation_fold, 
 def test_detections_are_matched_by_index_to_the_most_overlapping_aneurysm():
     import numpy as np
 
-    from evaluation import get_CM_dict
+    from deepanepose.inference.evaluation import get_CM_dict
 
     def sphere(x, r):  # center, radius, P1, P2 along x
         return [x, 0, 0, r, x - r, 0, 0, x + r, 0, 0]

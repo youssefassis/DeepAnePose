@@ -3,7 +3,7 @@ import os
 import nibabel as ni
 import numpy as np
 
-import Data.IO as dio
+from deepanepose.data import io as dio
 
 
 def test_linear_normalization_rescales_to_unit_range(tmp_path):
@@ -20,7 +20,7 @@ def test_extract_points_script_handles_patients_with_and_without_aneurysm(tmp_pa
 
     import pandas as pd
 
-    import extractPoints
+    import extract_points
 
     monkeypatch.chdir(tmp_path)
     vol = np.random.default_rng(0).random((30, 30, 30)).astype(np.float32)
@@ -33,9 +33,9 @@ def test_extract_points_script_handles_patients_with_and_without_aneurysm(tmp_pa
             (patient / "aneurysm.csv").write_text("x,y,z\n40,40,40\n44,40,40\n")
             config["pts aneurysm"] = "aneurysm.csv"
         (patient / "config.json").write_text(json.dumps(config))
-    monkeypatch.setattr("sys.argv", ["extractPoints.py", str(tmp_path / "Data")])
+    monkeypatch.setattr("sys.argv", ["extract_points.py", str(tmp_path / "Data")])
 
-    extractPoints.main()
+    extract_points.main()
 
     for name in ("P0001", "P0002"):
         assert set(pd.read_csv(tmp_path / "Data" / name / "points.csv")["type"]) == {"Vessel", "Parenchyma"}

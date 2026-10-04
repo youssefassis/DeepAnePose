@@ -3,9 +3,9 @@ import torch
 import numpy as np
 import SimpleITK as sitk
 from tqdm import tqdm
-import Data.IO as dio
-import utils
-from helpers import cells_to_spheres, non_max_suppression, spheres_to_metric, save_spheres, keep_only_intersected_spheres, flip_coords
+from deepanepose.data import io as dio
+from deepanepose import utils
+from deepanepose.helpers import cells_to_spheres, non_max_suppression, spheres_to_metric, save_spheres, keep_only_intersected_spheres, flip_coords
 
 def calculate_origin_offset(new_spacing, old_spacing):
     '''
@@ -185,7 +185,7 @@ def ndl_run_validation_case(pat_dict, device, size, dim, output_dir, patient_nam
                             batch_size, mirror_axes, iou_threshold, detections_per_patch, patient_wise_tta, S=None):
     """
     Runs a test case and writes predicted coordinates to file.
-    :param pat_dict: info about the patient data. Dictionary as returned by Data.IO.read_patient_dabase (including the 'dir' key)
+    :param pat_dict: info about the patient data. Dictionary as returned by deepanepose.data.io.read_patient_data_base (including the 'dir' key)
     :param size: 3-tuple that provides the size in mm of a patch (patch shape will be extracted from model info)
     :param output_dir: Where to write prediction images.
     :param output_label_map: If True, will write out a single image with one or more labels. Otherwise outputs
