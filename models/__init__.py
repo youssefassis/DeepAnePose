@@ -1,1 +1,0 @@
-all = [ 'YOLO_orientation' ]

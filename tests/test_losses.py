@@ -2,7 +2,7 @@ import math
 
 import torch
 
-from losses import YOLO_Regression_Cosine_Loss
+from deepanepose.training.losses import YOLO_Regression_Cosine_Loss
 
 
 def test_loss_of_a_batch_without_aneurysm_is_finite():

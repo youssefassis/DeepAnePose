@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
 import sys, torch
 
-from utils import get_optimizer_scheduler, get_model, load_training_config
-from Data.IO import add_points_to_patient_data, readSplit, read_patient_data_base
-from losses import get_loss_criterion
+from deepanepose.utils import get_optimizer_scheduler, get_model, load_training_config
+from deepanepose.data.io import add_points_to_patient_data, readSplit, read_patient_data_base
+from deepanepose.training.losses import get_loss_criterion
 
-from trainer import create_trainer
-from dataset import getDataloaders
+from deepanepose.training.trainer import create_trainer
+from deepanepose.training.dataset import getDataloaders
 
 def main():
     if len(sys.argv) != 2:

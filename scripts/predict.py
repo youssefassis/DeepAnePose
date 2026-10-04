@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
 import os, sys, torch
-import Data.IO as dio
-from utils import get_logger, load_model, load_training_config
-from prediction import ndl_run_validation_cases
+from deepanepose.data import io as dio
+from deepanepose.utils import get_logger, load_model, load_training_config
+from deepanepose.inference.prediction import ndl_run_validation_cases
 
 def main():
     if len(sys.argv) != 2:
