@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper below."
+title: "DeepAnePose: aneurysm pose estimation with deep learning"
+type: software
+authors:
+  - family-names: Assis
+    given-names: Youssef
+repository-code: "https://github.com/youssefassis/DeepAnePose"
+keywords:
+  - intracranial aneurysm
+  - magnetic resonance angiography
+  - deep learning
+  - pose estimation
+preferred-citation:
+  type: conference-paper
+  title: "Aneurysm Pose Estimation with Deep Learning"
+  authors:
+    - family-names: Assis
+      given-names: Youssef
+    - family-names: Liao
+      given-names: Liang
+    - family-names: Pierre
+      given-names: Fabien
+    - family-names: Anxionnat
+      given-names: René
+    - family-names: Kerrien
+      given-names: Erwan
+  collection-title: "Medical Image Computing and Computer Assisted Intervention – MICCAI 2023"
+  conference:
+    name: "MICCAI 2023"
+  publisher:
+    name: Springer Nature Switzerland
+  year: 2023
+  start: 543
+  end: 553
+  doi: "10.1007/978-3-031-43895-0_51"
+  url: "https://link.springer.com/chapter/10.1007/978-3-031-43895-0_51"
