@@ -37,3 +37,10 @@ def test_extract_points_script_handles_patients_with_and_without_aneurysm(tmp_pa
 
     for name in ("P0001", "P0002"):
         assert set(pd.read_csv(tmp_path / "Data" / name / "points.csv")["type"]) == {"Vessel", "Parenchyma"}
+
+
+def test_read_points_reports_a_missing_file(tmp_path):
+    import pytest
+
+    with pytest.raises(FileNotFoundError):
+        dio.read_points_from_csv(tmp_path / "points.csv")
