@@ -31,3 +31,18 @@ def test_detections_are_matched_by_index_to_the_most_overlapping_aneurysm():
 
     assert [(d["TP"], d.get("GT Center", [None])[0]) for d in detections] == [(1, 3), (1, 50), (0, 50)]
     assert [fn["Center"][0] for fn in fns] == [0]
+
+
+def test_evaluate_script_without_false_or_true_positives(evaluation_fold, monkeypatch):
+    import json
+
+    for kept in ("true positives", "nothing"):
+        for prediction_file in evaluation_fold.glob("*.json"):
+            detections = json.loads(prediction_file.read_text())
+            keep = {k: d for k, d in detections.items() if d["confidence"] == 0.9} if kept == "true positives" else {}
+            prediction_file.write_text(json.dumps(keep))
+        monkeypatch.setattr("sys.argv", ["evaluate.py", str(evaluation_fold)])
+
+        evaluate.main()
+
+        assert (evaluation_fold / "Evaluation@0.1.png").is_file()
