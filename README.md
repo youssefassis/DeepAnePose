@@ -58,9 +58,9 @@ To use our code, follow the following steps:
     git clone https://gitlab.inria.fr/yassis/DeepAnePose.git
     cd DeepAnePose
     ```
-2. Install the requirements and add the source folders to the `PYTHONPATH`:
+2. Install the dependencies with [uv](https://docs.astral.sh/uv/) (`--extra cu126` for an NVIDIA GPU, `--extra cpu` otherwise), and add the source folders to the `PYTHONPATH`; the commands below then run with `uv run`:
     ```
-    pip install -r requirements.txt
+    uv sync --extra cu126
     export PYTHONPATH="$PWD/dataStrategy:$PWD/models:$PWD/resources:$PYTHONPATH"
     ```
 3. Generate the "noskull.nii.gz" file: Use the "[removeSkull.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/removeSkull.py).py" file to remove the skull from the patient's data. Execute the following command:
