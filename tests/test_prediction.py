@@ -26,3 +26,45 @@ def test_patch_wise_prediction_does_not_depend_on_batch_size(batch_size):
 
     # center: middle of the first 4-voxel cell of each patch; neck (P1): 1 voxel before along x
     assert sorted(s[:6] for s in spheres) == [[2.0, 2.0, 2.0, 1.0, 2.0, 2.0], [10.0, 2.0, 2.0, 9.0, 2.0, 2.0]]
+
+
+def test_angle_between_parallel_vectors_is_zero():
+    from helpers import angle_between_vectors
+
+    v = np.array([0.1, 0.2, 0.3])
+
+    assert angle_between_vectors(3.7 * v, 1.3 * v) == 0 and angle_between_vectors(v, -v) == 180
+
+
+@pytest.mark.parametrize("tta", [False, True])
+def test_validation_case_writes_the_final_predictions(tmp_path, tta):
+    patient = {"data": np.zeros((16, 8, 8), dtype=np.float32), "affine": np.eye(4)}
+
+    prediction.ndl_run_validation_case(
+        patient, "cpu", size=[8, 8, 8], dim=[8, 8, 8], output_dir=str(tmp_path), patient_name="P0001",
+        model=OneDetectionPerPatch(), margin=0, batch_size=1, mirror_axes=[0], iou_threshold=0.01,
+        detections_per_patch=None, patient_wise_tta=tta,
+    )
+
+    assert (tmp_path / "P0001.json").is_file()
+
+
+def test_validation_cases_keep_patients_with_the_same_session_apart(tmp_path):
+    import json
+
+    import nibabel as ni
+
+    patients = []
+    for subject in ("sub-001", "sub-002"):
+        patient = tmp_path / subject / "ses-20100101"
+        patient.mkdir(parents=True)
+        ni.save(ni.Nifti1Image(np.zeros((16, 8, 8), np.float32), np.eye(4)), patient / "volume.nii.gz")
+        (patient / "config.json").write_text(json.dumps({"init volume": "volume.nii.gz"}))
+        patients.append(str(patient))
+
+    prediction.ndl_run_validation_cases(
+        patients, "cpu", OneDetectionPerPatch(), patch_size=[8, 8, 8], patch_dim=[8, 8, 8],
+        input_volume="init volume", normalization=None, output_dir=str(tmp_path / "out"),
+    )
+
+    assert sorted(p.name for p in (tmp_path / "out").glob("*.json")) == ["sub-001_ses-20100101.json", "sub-002_ses-20100101.json"]

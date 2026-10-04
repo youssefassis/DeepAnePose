@@ -27,8 +27,8 @@ class YOLO_Regression_Cosine_Loss(nn.Module):
         mask = target[0][..., 0]==1
         n_pos_cells = mask.sum().float()
         
-        # Confidence Loss
-        confidence_obj_loss = self.confidence_loss(prediction[0][..., 0][mask], target[0][..., 0][mask])
+        # Confidence Loss (the object term only exists when the batch has aneurysm cells)
+        confidence_obj_loss = self.confidence_loss(prediction[0][..., 0][mask], target[0][..., 0][mask]) if n_pos_cells > 0 else 0.
         confidence_noobj_loss = self.confidence_loss(prediction[0][..., 0][~mask], target[0][..., 0][~mask])
         confidence_loss = confidence_obj_loss + 0.5 * n_pos_cells * confidence_noobj_loss
         

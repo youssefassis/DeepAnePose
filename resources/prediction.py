@@ -247,7 +247,7 @@ def ndl_run_validation_case(pat_dict, device, size, dim, output_dir, patient_nam
             save_spheres(spheres2, os.path.join(os.path.join(output_dir, f"F{axis}"),  patient_name+'.json'))
             # keep only intersected spheres
             spheres1 = keep_only_intersected_spheres(spheres1, spheres2, min_iou_threshold=0.1)
-        save_spheres(spheres1, os.path.join(output_dir, patient_name+'.json'))
+    save_spheres(spheres1, os.path.join(output_dir, patient_name+'.json'))
 
 def ndl_run_validation_cases(pat_list, device, model, patch_size, patch_dim, input_volume, normalization, output_dir='.',
                              margin=0, batch_size=1, mirror_axes=[0], do_tta=False, scales=[12],
@@ -276,13 +276,10 @@ def ndl_run_validation_cases(pat_list, device, model, patch_size, patch_dim, inp
         os.makedirs(output_dir)
     # Loop over patients
     for p in pat_list:
-        # Load volume data and apply normalization
-        pat_db = dio.read_patient_data_base([p], volume=input_volume, normalize=normalization, log=False)
-        
-        patient_name = os.path.basename(p)
-        if "CHUV" in pat_db[0]["dir"]:
-            patient_name = pat_db[0]["dir"][pat_db[0]["dir"].find('sub'): ].replace("/", '').replace('-', '').replace('_', '')
+        patient_name = dio.patient_name(p)
         if not os.path.isfile(os.path.join(output_dir, patient_name)+".json"):
+            # Load volume data and apply normalization
+            pat_db = dio.read_patient_data_base([p], volume=input_volume, normalize=normalization, log=False)
             # Inference
             ndl_run_validation_case(pat_db[0],
                                     device, 
