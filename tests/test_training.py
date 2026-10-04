@@ -16,3 +16,9 @@ def test_plateau_schedule_reduces_the_learning_rate(train):
     trainer = train(n_epochs=2, lr="ReduceLROnPlateau", factor=0.5, patience=1)
 
     assert lr(trainer) == pytest.approx(0.5e-2)
+
+
+def test_training_without_scheduler_saves_a_checkpoint(train, tmp_path):
+    train(n_epochs=1, lr=None)
+
+    assert (tmp_path / "last_checkpoint.pytorch").is_file()
