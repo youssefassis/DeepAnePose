@@ -1,7 +1,7 @@
 import os, json
 import numpy as np
 from deepanepose.data import io as dio
-from deepanepose.helpers import save_json, intersection_over_union, angle_between_vectors
+from deepanepose.helpers import intersection_over_union, angle_between_vectors
 
 def get_CM_dict(predictions, truths, iou_thr, confidence_thr, pat_name, verbose):
     '''

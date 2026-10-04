@@ -1,8 +1,6 @@
-import os, json, random, re, sys, cmath
+import os, json, re, sys, cmath
 import matplotlib.pyplot as plt
 from sklearn.metrics import auc
-import scipy.stats as stats
-import statistics
 import numpy as np
 import pandas as pd
 
@@ -93,7 +91,6 @@ def main():
     # Confusion matrix
     plt.figure()
     fig, ((ax, ax1, ax2, ax3, ax4, ax5, ax6), (ax7, ax9, ax10, ax11, ax12, ax13, ax8,)) = plt.subplots(nrows=2, ncols=7, figsize=(45,10))
-    #fig.subplots_adjust(top=0.82)
     fig.tight_layout(pad=6.0)
     fig.suptitle (f"Evaluation at {iou_threshold} IoU ({epoch} epochs)", fontsize=14)
 
@@ -269,7 +266,6 @@ def main():
     ax10.set_xlabel("Diameters (mm)")
     ax10.set_ylabel("Error (mm)")
     ax10.set_xlim((-0.5, 22))
-    #ax10.set_ylim((-18, 110))
     ax10.legend(loc="upper right", framealpha=0.7)
     ax10.grid(True)
     

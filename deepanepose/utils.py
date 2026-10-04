@@ -1,7 +1,6 @@
 import json, logging, math, os, sys, shutil
 import numpy as np
 import torch
-import copy
 
 def load_training_config(train_dir):
     '''
@@ -97,7 +96,6 @@ def save_checkpoint(state, is_best, checkpoint_dir, epoch = None, logger = None)
     torch.save(state, last_file_path)
     if is_best:
         best_file_path = os.path.join(checkpoint_dir, 'best_checkpoint.pytorch')
-        #log_info(f"Saving best checkpoint to '{best_file_path}'")
         shutil.copyfile(last_file_path, best_file_path)
         return True
     return False
