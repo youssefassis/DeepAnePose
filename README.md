@@ -94,8 +94,8 @@ in the volume rendering view, with a real-time display of the sphere in the cano
   ```
   uv run python scripts/convert_annotations.py reproducibility/annotations Data
   ```
-- `reproducibility/fold1.json` to `fold5.json`: the 5-fold cross-validation splits. Replace their `/path/to` prefix
-  with your data folder.
+- `reproducibility/fold1.json` to `fold5.json`: the 5-fold cross-validation splits. Their patient folders are
+  relative to the data folder given to `prepare.py`.
 
 ## Citation
 ```
