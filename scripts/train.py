@@ -1,4 +1,4 @@
-import sys, torch
+import os, sys, torch
 
 from deepanepose.utils import get_optimizer_scheduler, get_model, load_training_config
 from deepanepose.data.io import add_points_to_patient_data, readSplit, read_patient_data_base
@@ -12,7 +12,7 @@ def main():
         sys.exit(f"Usage: {sys.argv[0]} path/to/Train001")
     config = load_training_config(sys.argv[1])
     
-    workers = 12
+    workers = min(12, os.cpu_count() or 1) # data loading processes, at most one per CPU
     # Device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
