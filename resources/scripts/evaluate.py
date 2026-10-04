@@ -24,16 +24,16 @@ def main():
     out_dir = os.path.join(os.getcwd(), predictions_dir)
     with open(os.path.join(train_dir, 'ndl_config.json'),'r') as f:
         config = json.load(f)
-    split_patients = config['split_file']
-    
-    patients = sorted([os.path.join(predictions_dir, f) for f in sorted(os.listdir(predictions_dir)) if ".json" in f])
+    split_file = config['split_file'][0] if isinstance(config['split_file'], list) else config['split_file']
+    train_pats, val_pats, test_pats = dio.readSplit(split_file)
+    patients = val_pats + test_pats # predict.py predicts both
     print(len(patients), "patients for testing")
 
-    detections, FNs = evaluation.get_detections(patients,
+    detections, FNs = evaluation.get_detections(predictions_dir,
+                                                patients,
+                                                truth_file_name=config['truth file'],
                                                 iou_thr=iou_threshold,
                                                 confidence_thr=confidence_threshold,
-                                                dir_name=".",
-                                                truth_file_name='F.csv',
                                                 max_per_patient=None,
                                                 verbose=None)
     
@@ -218,19 +218,11 @@ def main():
     ax7.grid(True)
 
     # Last figure
-    if isinstance(split_patients, list): 
-        split_patients = split_patients[0]
-
-    with open(split_patients, 'r') as f:
-        config = json.load(f)
-    train_pats, val_pats, test_pats = config["training list"], config["validation list"], config["testing list"]
-    test_pats = val_pats+test_pats
-
     train_aneurysms, test_aneurysms = [], []
     for pat in train_pats:
-        train_aneurysms += dio.SizeAnev(pat)
-    for pat in test_pats:
-        test_aneurysms += dio.SizeAnev(pat)
+        train_aneurysms += dio.SizeAnev(pat, config['truth file'])
+    for pat in patients:
+        test_aneurysms += dio.SizeAnev(pat, config['truth file'])
 
     ax8.set_xticks([i for i in range(0, int(np.floor(max(train_aneurysms+test_aneurysms)))+1, 2)])
     ax8.hist(train_aneurysms, bins=range(0, 20), alpha=0.3, color='red',  edgecolor='black', linewidth=1.5)
@@ -239,7 +231,7 @@ def main():
     ax8.set_title('Training/Test aneurysm size distribution')
     ax8.set_xlabel('Diameter (mm)')
     ax8.set_ylabel('Count')
-    ax8.legend([f"Train ({len(train_aneurysms)} ans/ {len(train_pats)} patients)", f"Test ({len(test_aneurysms)} ans/ {len(test_pats)} patients)"])
+    ax8.legend([f"Train ({len(train_aneurysms)} ans/ {len(train_pats)} patients)", f"Test ({len(test_aneurysms)} ans/ {len(patients)} patients)"])
     ax8.grid(False)
 
     difference1 = [((i-j)/max(i,j))*400 for i,j in zip(diameters_TP_GT, diameters_TP) if i>j]
