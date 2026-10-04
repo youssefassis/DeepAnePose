@@ -16,9 +16,10 @@ def create_trainer(config, device, model, optimizer, lr_scheduler, loss_criterio
         num_epoch = state['epoch']    
     else:
         logger.info("Training from scratch")
+        state = None
         num_epoch = 0
         
-    return Trainer(model = model,
+    trainer = Trainer(model = model,
                    optimizer = optimizer,
                    lr_scheduler = lr_scheduler,
                    loss_criterion = loss_criterion,
@@ -30,6 +31,9 @@ def create_trainer(config, device, model, optimizer, lr_scheduler, loss_criterio
                    save_model_each_epochs = config["save model each n epoch"], 
                    warmup_epochs=config['warmEpochs'],
                    num_epoch = num_epoch)
+    if state is not None:
+        trainer.resume(state)
+    return trainer
 
 class Trainer:
     def __init__(self, model, optimizer, lr_scheduler, loss_criterion, device, loaders, model_path, save_model_each_epochs, max_num_epochs, max_iterations, warmup_epochs, num_epoch):
@@ -51,6 +55,15 @@ class Trainer:
                     
         self.writer = SummaryWriter(log_dir = os.path.join(self.checkpoint_dir, 'logs'))
             
+    def resume(self, state):
+        '''
+        Restores the learning rate schedule and the loss scaling saved in a checkpoint
+        '''
+        if self.scheduler is not None and state.get('scheduler_state_dict') is not None:
+            self.scheduler.load_state_dict(state['scheduler_state_dict'])
+        if state.get('mixed_precision'): # empty when saved without CUDA
+            self.mixed_precision.load_state_dict(state['mixed_precision'])
+
     def fit(self):
         logger.info(f"Training the model for {self.max_num_epochs - self.num_epoch} epochs")
         for epoch in range(self.num_epoch, self.max_num_epochs):
