@@ -25,10 +25,10 @@ def test_extract_points_script_handles_patients_with_and_without_aneurysm(tmp_pa
     for name, has_aneurysm in (("P0001", True), ("P0002", False)):
         patient = tmp_path / "Data" / name
         patient.mkdir(parents=True)
-        ni.save(ni.Nifti1Image(vol, np.eye(4)), patient / "noskull.nii.gz")
+        ni.save(ni.Nifti1Image(vol, np.diag([4.0, 4.0, 4.0, 1.0])), patient / "noskull.nii.gz")  # 120mm, room for 20mm spacing
         config = {"noskull volume": "noskull.nii.gz"}
         if has_aneurysm:
-            (patient / "aneurysm.csv").write_text("x,y,z\n10,10,10\n12,10,10\n")
+            (patient / "aneurysm.csv").write_text("x,y,z\n40,40,40\n44,40,40\n")
             config["pts aneurysm"] = "aneurysm.csv"
         (patient / "config.json").write_text(json.dumps(config))
     monkeypatch.setattr("sys.argv", ["extractPoints.py", str(tmp_path / "Data")])
