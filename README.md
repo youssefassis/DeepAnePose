@@ -58,20 +58,16 @@ To use our code, follow the following steps:
     git clone https://gitlab.inria.fr/yassis/DeepAnePose.git
     cd DeepAnePose
     ```
-2. Edit the "Docker" file by specifying the user_name, group_name, PYTHONPATH, and the configuration of Jupyterlab.
-3. Create and run the Docker container by running the following commands:
+2. Install the requirements and add the source folders to the `PYTHONPATH`:
     ```
-    chmod +x buildDocker.sh
-    ./buildDocker
-    chmod +x runDocker.sh
-    ./runDocker
+    pip install -r requirements.txt
+    export PYTHONPATH="$PWD/dataStrategy:$PWD/models:$PWD/resources:$PYTHONPATH"
     ```
-4. Access to the Jupyterlab from your browser.
-5. Generate the "noskull.nii.gz" file: Use the "[removeSkull.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/removeSkull.py).py" file to remove the skull from the patient's data. Execute the following command:
+3. Generate the "noskull.nii.gz" file: Use the "[removeSkull.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/removeSkull.py).py" file to remove the skull from the patient's data. Execute the following command:
     ```
     python resources/scripts/removeSkull.py
     ```
-6. Generate the "points.csv" file: Utilize the "[extractPoints.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/extractPoints.py)" file to extract the relevant negative patches center from each patient's data. Execute the following command:
+4. Generate the "points.csv" file: Utilize the "[extractPoints.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/extractPoints.py)" file to extract the relevant negative patches center from each patient's data. Execute the following command:
     ```
     python resources/scripts/extractPoints.py
     ```
