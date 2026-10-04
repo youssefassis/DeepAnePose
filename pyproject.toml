@@ -1,0 +1,12 @@
+# Test and lint settings for the current layout (modules are imported from the three source folders).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["dataStrategy", "models", "resources", "resources/scripts"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# syntax errors and undefined names
+select = ["E9", "F63", "F7", "F82"]

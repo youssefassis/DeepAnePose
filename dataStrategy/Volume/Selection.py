@@ -1,9 +1,8 @@
 import numpy as np
 import sklearn.neighbors as skn
 import scipy.ndimage as sndi
-import skimage.morphology as skim
 import skimage.measure as skme
-from scipy.ndimage.measurements import label
+from scipy.ndimage import label
 from scipy.spatial import ConvexHull
 from scipy.spatial.distance import cdist
 
@@ -79,7 +78,7 @@ def selectPoints(vol,vox2met,thresLow,r,thresHigh=None,fPoints=None,
     removed=np.zeros(len(v),dtype=np.bool)
     tree=skn.KDTree(p)
 
-    if not fPoints is None:
+    if fPoints is not None and len(fPoints) > 0:
         if len(fPoints.shape) == 1:
             fPoints = fPoints[np.newaxis,:]
         i=tree.query_radius(fPoints,r)[0]
@@ -144,7 +143,7 @@ def removeSkullMask(vol,percent=80):
     # erode this mask to remove the skull
     selem=getBall(2)
     for _ in range(15):
-        mask=skim.binary_erosion(mask,footprint=selem).astype(np.uint8)
+        mask=sndi.binary_erosion(mask,structure=selem,border_value=True).astype(np.uint8)
     # return this mask
     return mask
 
