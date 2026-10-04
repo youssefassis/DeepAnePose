@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
 import sys, json
 import numpy as np
 import nibabel as ni
-import Volume.Selection as vs
+from deepanepose.volume import selection as vs
 
 def main():
     print('Load volume from disk')

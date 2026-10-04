@@ -1,7 +1,7 @@
 import os, json
 import numpy as np
-import Data.IO as dio
-from helpers import save_json, intersection_over_union, angle_between_vectors
+from deepanepose.data import io as dio
+from deepanepose.helpers import save_json, intersection_over_union, angle_between_vectors
 
 def get_CM_dict(predictions, truths, iou_thr, confidence_thr, pat_name, verbose):
     '''
@@ -96,7 +96,7 @@ def get_CM_dict(predictions, truths, iou_thr, confidence_thr, pat_name, verbose)
 
 def get_detections(predictions_dir, patient_dirs, truth_file_name, iou_thr=0.1, confidence_thr=0.05, max_per_patient=None, verbose=False):
     '''
-    Matches the predictions saved in predictions_dir (<patient name>.json, see Data.IO.patient_name) with the
+    Matches the predictions saved in predictions_dir (<patient name>.json, see deepanepose.data.io.patient_name) with the
     ground truth aneurysms of each patient directory (truth_file_name, a CSV of point pairs; none if missing).
     Returns the detections sorted by decreasing confidence, and the missed aneurysms (FNs).
     '''

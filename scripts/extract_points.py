@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
 import sys
-import Data.IO as dio
+from deepanepose.data import io as dio
 
 def main():
     if len(sys.argv) != 2:

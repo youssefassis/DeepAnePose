@@ -42,7 +42,7 @@ def select_model(config, logger):
     Instantiate and return the model
     '''
     if config["model"] == "YOLO_Orientation":
-        from YOLO_orientation import YOLO_Orientation, DoubleConv, ExtResNetBlock
+        from deepanepose.models.yolo_orientation import YOLO_Orientation, DoubleConv, ExtResNetBlock
         pool_type = config['pool_type'] if 'pool_type' in config else 'max'
         basic_module = ExtResNetBlock if 'basic_module' in config and config['basic_module']=="ExtResNetBlock" else DoubleConv
         nb_params = config['num parameters'] if 'num parameters' in config else 4
@@ -167,7 +167,7 @@ def create_lr_scheduler(optimizer, config, warmup_steps=0):
         logger.info("No scheduler specified")
 
     elif config["lr"] == "Warmup":
-        from schedulers import WarmupLRScheduler
+        from deepanepose.training.schedulers import WarmupLRScheduler
         scheduler = WarmupLRScheduler(optimizer = optimizer,
                                       min_lr = config['min_lr'],
                                       max_lr = config['initial_learning_rate'],
@@ -175,7 +175,7 @@ def create_lr_scheduler(optimizer, config, warmup_steps=0):
         logger.info(f"WarmupLR Scheduler: warmup_steps = {warmup_steps}")
 
     elif config["lr"] == "ReduceLROnPlateau":
-        from schedulers import ReduceLROnPlateau
+        from deepanepose.training.schedulers import ReduceLROnPlateau
         factor, patience, wloss = config["factor"], config["patience"], True#config["wloss"]
         scheduler = ReduceLROnPlateau(optimizer = optimizer,
                                       factor = factor,
@@ -185,7 +185,7 @@ def create_lr_scheduler(optimizer, config, warmup_steps=0):
         logger.info(f"ReduceLROnPlateau Scheduler: patience={patience}, factor={factor}, wloss={wloss}")
 
     elif config["lr"] == "Poly":
-        from schedulers import Poly
+        from deepanepose.training.schedulers import Poly
         start_epoch = config["start_epoch"] 
         scheduler = Poly(optimizer = optimizer,
                          start_epoch = start_epoch,
@@ -195,7 +195,7 @@ def create_lr_scheduler(optimizer, config, warmup_steps=0):
         logger.info(f"Polynomial Scheduler: start_epoch={start_epoch}, max_epochs={config['n_epochs']}")
 
     elif config["lr"] == "WarmupPlateau":
-        from schedulers import WarmupScheduler, ReduceLROnPlateau
+        from deepanepose.training.schedulers import WarmupScheduler, ReduceLROnPlateau
         start_epoch = 10
         scheduler = WarmupScheduler(optimizer = optimizer, 
                                         min_lr = 1e-8,
@@ -208,7 +208,7 @@ def create_lr_scheduler(optimizer, config, warmup_steps=0):
                                                                                    start_epoch = start_epoch))
         logger.info(f"WarmupPlateau scheduler : lr={config['initial_learning_rate']}, patience={config['patience']}, factor={config['factor']}, start_epoch={start_epoch}")
     elif config["lr"] == "WarmupPoly":
-        from schedulers import WarmupScheduler, Poly
+        from deepanepose.training.schedulers import WarmupScheduler, Poly
         start_epoch = config["start_epoch"] 
         stop_epoch = config["stop_epoch"] 
         scheduler = WarmupScheduler(optimizer = optimizer, 

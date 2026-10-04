@@ -2,9 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-import prediction
-
-
+from deepanepose.inference import prediction
 class OneDetectionPerPatch(torch.nn.Module):
     """Detects an aneurysm in the first cell of a 2x2x2 grid of every patch, its neck 1 voxel away along x."""
 
@@ -29,7 +27,7 @@ def test_patch_wise_prediction_does_not_depend_on_batch_size(batch_size):
 
 
 def test_angle_between_parallel_vectors_is_zero():
-    from helpers import angle_between_vectors
+    from deepanepose.helpers import angle_between_vectors
 
     v = np.array([0.1, 0.2, 0.3])
 

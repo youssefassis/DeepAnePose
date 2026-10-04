@@ -1,4 +1,4 @@
-from batchsampler import BalancedBatchSampler
+from deepanepose.training.batch_sampler import BalancedBatchSampler
 
 
 def test_batches_hold_integer_indices_without_negative_patches():
