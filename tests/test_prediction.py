@@ -3,6 +3,8 @@ import pytest
 import torch
 
 from deepanepose.inference import prediction
+
+
 class OneDetectionPerPatch(torch.nn.Module):
     """Detects an aneurysm in the first cell of a 2x2x2 grid of every patch, its neck 1 voxel away along x."""
 
@@ -19,7 +21,13 @@ def test_patch_wise_prediction_does_not_depend_on_batch_size(batch_size):
     volume = np.zeros((16, 8, 8), dtype=np.float32)  # two 8-voxel patches along x
 
     _, spheres = prediction.ndl_patch_wise_prediction(
-        "cpu", OneDetectionPerPatch(), volume, [8, 8, 8], iou_threshold=0.01, detections_per_patch=None, batch_size=batch_size
+        "cpu",
+        OneDetectionPerPatch(),
+        volume,
+        [8, 8, 8],
+        iou_threshold=0.01,
+        detections_per_patch=None,
+        batch_size=batch_size,
     )
 
     # center: middle of the first 4-voxel cell of each patch; neck (P1): 1 voxel before along x
@@ -39,9 +47,19 @@ def test_validation_case_writes_the_final_predictions(tmp_path, tta):
     patient = {"data": np.zeros((16, 8, 8), dtype=np.float32), "affine": np.eye(4)}
 
     prediction.ndl_run_validation_case(
-        patient, "cpu", size=[8, 8, 8], dim=[8, 8, 8], output_dir=str(tmp_path), patient_name="P0001",
-        model=OneDetectionPerPatch(), margin=0, batch_size=1, mirror_axes=[0], iou_threshold=0.01,
-        detections_per_patch=None, patient_wise_tta=tta,
+        patient,
+        "cpu",
+        size=[8, 8, 8],
+        dim=[8, 8, 8],
+        output_dir=str(tmp_path),
+        patient_name="P0001",
+        model=OneDetectionPerPatch(),
+        margin=0,
+        batch_size=1,
+        mirror_axes=[0],
+        iou_threshold=0.01,
+        detections_per_patch=None,
+        patient_wise_tta=tta,
     )
 
     assert (tmp_path / "P0001.json").is_file()
@@ -61,8 +79,17 @@ def test_validation_cases_keep_patients_with_the_same_session_apart(tmp_path):
         patients.append(str(patient))
 
     prediction.ndl_run_validation_cases(
-        patients, "cpu", OneDetectionPerPatch(), patch_size=[8, 8, 8], patch_dim=[8, 8, 8],
-        input_volume="init volume", normalization=None, output_dir=str(tmp_path / "out"),
+        patients,
+        "cpu",
+        OneDetectionPerPatch(),
+        patch_size=[8, 8, 8],
+        patch_dim=[8, 8, 8],
+        input_volume="init volume",
+        normalization=None,
+        output_dir=str(tmp_path / "out"),
     )
 
-    assert sorted(p.name for p in (tmp_path / "out").glob("*.json")) == ["sub-001_ses-20100101.json", "sub-002_ses-20100101.json"]
+    assert sorted(p.name for p in (tmp_path / "out").glob("*.json")) == [
+        "sub-001_ses-20100101.json",
+        "sub-002_ses-20100101.json",
+    ]

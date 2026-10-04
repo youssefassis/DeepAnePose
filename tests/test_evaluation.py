@@ -27,7 +27,9 @@ def test_detections_are_matched_by_index_to_the_most_overlapping_aneurysm():
     truths = np.array([sphere(0, 2), sphere(3, 2), sphere(50, 2)])  # the first and last have the same size
     predictions = np.array([sphere(2.5, 2) + [0.9], sphere(50, 2) + [0.8], sphere(50.5, 2) + [0.7]])
 
-    detections, fns = get_CM_dict(predictions, truths, iou_thr=0.1, confidence_thr=0.01, pat_name="P0001", verbose=False)
+    detections, fns = get_CM_dict(
+        predictions, truths, iou_thr=0.1, confidence_thr=0.01, pat_name="P0001", verbose=False
+    )
 
     assert [(d["TP"], d.get("GT Center", [None])[0]) for d in detections] == [(1, 3), (1, 50), (0, 50)]
     assert [fn["Center"][0] for fn in fns] == [0]

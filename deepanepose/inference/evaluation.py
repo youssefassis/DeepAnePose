@@ -1,20 +1,22 @@
-import os, json
+import os
+import json
 import numpy as np
 from deepanepose.data import io as dio
 from deepanepose.helpers import intersection_over_union, angle_between_vectors
 
+
 def get_CM_dict(predictions, truths, iou_thr, confidence_thr, pat_name, verbose):
-    '''
-    This function computes the confusion matrix (CM) for the predictions. 
+    """
+    This function computes the confusion matrix (CM) for the predictions.
     Parameters:
-        - The predicted aneurysms (list of lists), each prediction is a list 
+        - The predicted aneurysms (list of lists), each prediction is a list
         of 11 elements (3-center, 1-radius, 3-point1, 3-point2, 1-confidence)
         - The ground truth aneurysms (list of lists)
         - The Intersection over union (IoU) threshold (float)
         - The confidence threshold (float)
         - Patient name (String, e.g. P0001)
         - verbosity flag (boolean).
-        
+
     The function first removes the predictions with a confidence score lower
     than the predefined threshold confidence_thr. Then, from the most to the
     least confident, it computes the IoU between each predicted sphere and
@@ -25,45 +27,50 @@ def get_CM_dict(predictions, truths, iou_thr, confidence_thr, pat_name, verbose)
         prediction, it is a false positive (FP) duplicate.
         - If it overlaps no GT sphere, it is a false positive (FP).
     The GT spheres left undetected are the false negatives (FN).
-    
-    Finally, the function returns the detection table and the list of FNs. 
-    The detection table is a list of dictionaries, where each dictionary 
-    contains information about a detected aneurysm, such as its confidence 
-    score, diameter, IoU score, TP or FP status, the coordinates of its 
+
+    Finally, the function returns the detection table and the list of FNs.
+    The detection table is a list of dictionaries, where each dictionary
+    contains information about a detected aneurysm, such as its confidence
+    score, diameter, IoU score, TP or FP status, the coordinates of its
     center and endpoints (and those of the matched GT sphere), and the angle
     between their axes. The FNs list is a list of dictionaries, where each
-    dictionary contains information about a missed aneurysm, such as its 
-    diameter and the coordinates of its center.    
-    '''
+    dictionary contains information about a missed aneurysm, such as its
+    diameter and the coordinates of its center.
+    """
     detection_table = []
     detected = np.zeros(truths.shape[0], dtype=bool)
     # Remove spheres with low confidence score than predefined confidence_thr
     predictions = predictions[(predictions[:, -1] >= confidence_thr), :]
-    predictions = predictions[np.argsort(-predictions[:, -1], kind='stable')] # most confident first
-    if verbose: print(f"\n{predictions.shape[0]} detections / {truths.shape[0]} GT aneurysms")
+    predictions = predictions[np.argsort(-predictions[:, -1], kind="stable")]  # most confident first
+    if verbose:
+        print(f"\n{predictions.shape[0]} detections / {truths.shape[0]} GT aneurysms")
 
     # loop over detections spheres
     for det_idx, detection in enumerate(predictions):
         diameter = 2 * detection[3]
         confidence = detection[-1] * 100
-        if verbose: print(f"\t- Detection {det_idx+1}: confidence={round(confidence, 3)}%; diameter={round(diameter, 3)}mm")
+        if verbose:
+            print(f"\t- Detection {det_idx + 1}: confidence={round(confidence, 3)}%; diameter={round(diameter, 3)}mm")
 
-        ious = np.array([intersection_over_union(prediction = detection[:4], truth = truth[:4]) for truth in truths])
+        ious = np.array([intersection_over_union(prediction=detection[:4], truth=truth[:4]) for truth in truths])
         if verbose:
             for j, (iou_score, truth) in enumerate(zip(ious, truths)):
-                print(f"\t\t-> vs truth {j+1}: iou={round(iou_score * 100, 3)}%, gt_diam={round(truth[3] * 2, 3)}mm")
+                print(f"\t\t-> vs truth {j + 1}: iou={round(iou_score * 100, 3)}%, gt_diam={round(truth[3] * 2, 3)}mm")
 
         overlapping = ious >= iou_thr
         if not overlapping.any():
-            detection_table.append({'Confidence': confidence, 
-                                    'Diameter': diameter, 
-                                    'Center': detection[:3].tolist(), 
-                                    'IoU': 0, 
-                                    'TP': 0, 
-                                    'FP': 1, 
-                                    'Pred P1': detection[4:7].tolist(),
-                                    'Pred P2': detection[7:10].tolist()
-                                   })
+            detection_table.append(
+                {
+                    "Confidence": confidence,
+                    "Diameter": diameter,
+                    "Center": detection[:3].tolist(),
+                    "IoU": 0,
+                    "TP": 0,
+                    "FP": 1,
+                    "Pred P1": detection[4:7].tolist(),
+                    "Pred P2": detection[7:10].tolist(),
+                }
+            )
             continue
 
         candidates = overlapping & ~detected
@@ -73,68 +80,97 @@ def get_CM_dict(predictions, truths, iou_thr, confidence_thr, pat_name, verbose)
             TP, FP = 1, 0
         else:
             match = np.argmax(ious)
-            print(f'\t\tAneurysm already detected by another prediction ({pat_name})')
+            print(f"\t\tAneurysm already detected by another prediction ({pat_name})")
             TP, FP = 0, 1
         truth = truths[match]
-        detection_table.append({'Confidence': confidence, 
-                                'Diameter': diameter, 
-                                'Center': detection[:3].tolist(), 
-                                'GT diameter': truth[3] * 2, 
-                                'IoU': ious[match], 
-                                'GT Center': truth[:3].tolist(), 
-                                'TP': TP, 
-                                'FP': FP,
-                                'Pred P1': detection[4:7].tolist(),
-                                'Pred P2': detection[7:10].tolist(),
-                                'GT P1': truth[4:7].tolist(), 
-                                'GT P2': truth[7:10].tolist(),
-                                'degree': angle_between_vectors(detection[4:7] - detection[7:10], truth[4:7] - truth[7:10])
-                               })
+        detection_table.append(
+            {
+                "Confidence": confidence,
+                "Diameter": diameter,
+                "Center": detection[:3].tolist(),
+                "GT diameter": truth[3] * 2,
+                "IoU": ious[match],
+                "GT Center": truth[:3].tolist(),
+                "TP": TP,
+                "FP": FP,
+                "Pred P1": detection[4:7].tolist(),
+                "Pred P2": detection[7:10].tolist(),
+                "GT P1": truth[4:7].tolist(),
+                "GT P2": truth[7:10].tolist(),
+                "degree": angle_between_vectors(detection[4:7] - detection[7:10], truth[4:7] - truth[7:10]),
+            }
+        )
     # FNs
-    FNs = [{'Center': gt[:3].tolist(), 'Diameter': gt[3]*2} for gt in truths[~detected]]
+    FNs = [{"Center": gt[:3].tolist(), "Diameter": gt[3] * 2} for gt in truths[~detected]]
     return detection_table, FNs
 
-def get_detections(predictions_dir, patient_dirs, truth_file_name, iou_thr=0.1, confidence_thr=0.05, max_per_patient=None, verbose=False):
-    '''
+
+def get_detections(
+    predictions_dir,
+    patient_dirs,
+    truth_file_name,
+    iou_thr=0.1,
+    confidence_thr=0.05,
+    max_per_patient=None,
+    verbose=False,
+):
+    """
     Matches the predictions saved in predictions_dir (<patient name>.json, see deepanepose.data.io.patient_name) with the
     ground truth aneurysms of each patient directory (truth_file_name, a CSV of point pairs; none if missing).
     Returns the detections sorted by decreasing confidence, and the missed aneurysms (FNs).
-    '''
+    """
     detections, FNs_cases = [], []
     for patient_dir in patient_dirs:
         pat_name = dio.patient_name(patient_dir)
-        if verbose: print(f"{pat_name}", end = ", ")
-        
+        if verbose:
+            print(f"{pat_name}", end=", ")
+
         # Get Prediction Spheres
         with open(os.path.join(predictions_dir, f"{pat_name}.json"), "r") as f:
             predictions = json.load(f)
         pred_spheres = np.empty((0, 11))
         for idx, key in enumerate(predictions):
-            pred_spheres = np.vstack((pred_spheres, np.hstack((predictions[key]["center"], 
-                                                               predictions[key]["radius"], 
-                                                               predictions[key]["P1"], 
-                                                               predictions[key]["P2"], 
-                                                               predictions[key]["confidence"]))))
-            if max_per_patient is not None and pred_spheres.shape[0] == max_per_patient: break
+            pred_spheres = np.vstack(
+                (
+                    pred_spheres,
+                    np.hstack(
+                        (
+                            predictions[key]["center"],
+                            predictions[key]["radius"],
+                            predictions[key]["P1"],
+                            predictions[key]["P2"],
+                            predictions[key]["confidence"],
+                        )
+                    ),
+                )
+            )
+            if max_per_patient is not None and pred_spheres.shape[0] == max_per_patient:
+                break
         del predictions
-        
+
         # Get Truth Spheres
         truth_file = os.path.join(patient_dir, truth_file_name)
-        truth_spheres = dio.points_to_spheres_regression(dio.read_points_from_csv(truth_file)) if os.path.isfile(truth_file) else np.empty((0, 10))
-        
-        detection_table, FNs = get_CM_dict(pred_spheres,
-                                           truth_spheres, 
-                                           iou_thr = iou_thr, 
-                                           confidence_thr = confidence_thr, 
-                                           verbose = verbose,
-                                           pat_name = pat_name)
+        truth_spheres = (
+            dio.points_to_spheres_regression(dio.read_points_from_csv(truth_file))
+            if os.path.isfile(truth_file)
+            else np.empty((0, 10))
+        )
+
+        detection_table, FNs = get_CM_dict(
+            pred_spheres,
+            truth_spheres,
+            iou_thr=iou_thr,
+            confidence_thr=confidence_thr,
+            verbose=verbose,
+            pat_name=pat_name,
+        )
         for FN in FNs:
-            FN['Patient'] = pat_name
-            FNs_cases.append( FN)
-                    
+            FN["Patient"] = pat_name
+            FNs_cases.append(FN)
+
         for det in detection_table:
-            det['Patient'] = pat_name
-            det['FNs diameters'] = [f['Diameter'] for f in FNs]
+            det["Patient"] = pat_name
+            det["FNs diameters"] = [f["Diameter"] for f in FNs]
             detections.append(det)
-    
-    return sorted(detections, key=lambda d: d['Confidence'], reverse=True) , FNs_cases
+
+    return sorted(detections, key=lambda d: d["Confidence"], reverse=True), FNs_cases
