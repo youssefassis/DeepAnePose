@@ -215,14 +215,15 @@ def add_points_to_patient_data(da, pname, nb=None):
         d.update({'points':read_points_from_csv(os.path.join(d['dir'], pname), nb)})
     return da
 
-def readSplit(cfg):
+def readSplit(cfg, data_dir=None):
     '''
-    reads a split list of patients (directories), in a json file with keys 'training list', 'validation list' and 'testing list'
+    reads a split list of patients (directories), in a json file with keys 'training list', 'validation list' and 'testing list'.
+    Relative directories are taken from data_dir (as in reproducibility/fold*.json); absolute ones are kept.
     '''
     with open(cfg, 'r') as f:
         d = json.load(f)
     logger.info(f"Data splits: Training {len(d['training list'])}, Validation: {len(d['validation list'])}, Testing: {len(d['testing list'])}")
-    return d['training list'], d['validation list'], d['testing list']
+    return tuple([os.path.join(data_dir or '', p) for p in d[key]] for key in ('training list', 'validation list', 'testing list'))
 
 
 def csv2fcsv(csv_pathname):

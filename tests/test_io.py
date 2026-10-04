@@ -47,3 +47,12 @@ def test_read_points_reports_a_missing_file(tmp_path):
 
     with pytest.raises(FileNotFoundError):
         dio.read_points_from_csv(tmp_path / "points.csv")
+
+
+def test_relative_split_entries_are_taken_from_the_data_folder(tmp_path):
+    import json
+
+    split = tmp_path / "fold1.json"
+    split.write_text(json.dumps({"training list": ["sub-001/ses-1"], "validation list": [], "testing list": ["/abs/P0001"]}))
+
+    assert dio.readSplit(str(split), "/data") == (["/data/sub-001/ses-1"], [], ["/abs/P0001"])
