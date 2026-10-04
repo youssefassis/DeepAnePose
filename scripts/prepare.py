@@ -1,12 +1,22 @@
-import os, json
+import argparse, os, json
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Creates a training directory <work_dir>/<name> with its ndl_config.json. "
+                                                 "The other training settings are set below in this file.")
+    parser.add_argument("data_dir", help="directory of the patients")
+    parser.add_argument("work_dir", help="directory of the trainings")
+    parser.add_argument("split_file", help="training, validation and testing patients (e.g. reproductibility/fold1.json)")
+    parser.add_argument("--name", help="training directory name (default: the split file name, e.g. fold1)")
+    return parser.parse_args()
 
 def main():
+    args = parse_args()
     config = dict()
 
-    config['base_dir'] = '/path/to/Patients/Directory'
-    config['working_dir'] = '/path/to/Work/Directory'
-    config["split_file"] = "/path/to/fold1.json"
-    config["test_name"] = "Fold1"
+    config['base_dir'] = os.path.abspath(args.data_dir)
+    config['working_dir'] = os.path.abspath(args.work_dir)
+    config["split_file"] = os.path.abspath(args.split_file)
+    config["test_name"] = args.name or os.path.splitext(os.path.basename(args.split_file))[0]
     
     config["overwrite"] = False
     
@@ -15,7 +25,7 @@ def main():
     config["normalize"] = "Normal"
     config["patch_shape"] = [96, 96, 96]
     config["patch_size"] = [0.4, 0.4, 0.4]
-    config["truth file"] = "F.csv"
+    config["truth file"] = "aneurysms.csv"
     config["balancedbatch"] = True
     config["drop_last"] = True
     
@@ -65,14 +75,10 @@ def main():
     #config["small positive duplicates"] = 50
     config["save model each n epoch"] = 10
     
-    config['test_dir'] = os.path.join(config['working_dir'],'0Work',config['test_name'])
+    config['test_dir'] = os.path.join(config['working_dir'], config['test_name'])
     config["model_file"] = os.path.join(config['test_dir'], "last_checkpoint.pytorch")
     
-    # Create training dir if not exists
-    if not os.path.exists(config['test_dir']):
-        os.makedirs(config['test_dir'], exist_ok=True)
-    
-    # Saving configuration as json file in working directory
+    os.makedirs(config['test_dir'], exist_ok=True)
     with open(os.path.join(config['test_dir'], 'ndl_config.json'), 'w') as f:
         json.dump(config, f, indent = 2)
 
