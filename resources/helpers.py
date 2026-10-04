@@ -38,7 +38,7 @@ def angle_between_vectors(A, B):
     which is then converted to degrees and returned as the output.
     '''
     cos_angle = np.dot(A, B)/(np.linalg.norm(A)*np.linalg.norm(B))
-    return math.degrees(math.acos(cos_angle))
+    return math.degrees(math.acos(np.clip(cos_angle, -1, 1))) # rounding can push the cosine past 1
 
 def cells_to_spheres(predictions, obj_thresh, input_shape):
     '''

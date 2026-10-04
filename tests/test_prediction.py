@@ -26,3 +26,11 @@ def test_patch_wise_prediction_does_not_depend_on_batch_size(batch_size):
 
     # center: middle of the first 4-voxel cell of each patch; neck (P1): 1 voxel before along x
     assert sorted(s[:6] for s in spheres) == [[2.0, 2.0, 2.0, 1.0, 2.0, 2.0], [10.0, 2.0, 2.0, 9.0, 2.0, 2.0]]
+
+
+def test_angle_between_parallel_vectors_is_zero():
+    from helpers import angle_between_vectors
+
+    v = np.array([0.1, 0.2, 0.3])
+
+    assert angle_between_vectors(3.7 * v, 1.3 * v) == 0 and angle_between_vectors(v, -v) == 180
