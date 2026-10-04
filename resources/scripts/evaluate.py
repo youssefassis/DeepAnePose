@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, json, random, sys, cmath
+import os, json, random, re, sys, cmath
 import matplotlib.pyplot as plt
 from sklearn.metrics import auc
 import scipy.stats as stats
@@ -22,8 +22,7 @@ def main():
     predictions_dir = sys.argv[1]
     print(predictions_dir)
     if not os.path.isdir(predictions_dir):
-        print(f'No directory found to load predictions ({predictions_dir})')
-        exit()
+        sys.exit(f"No predictions directory '{predictions_dir}'")
 
     iou_threshold, confidence_threshold = 0.1, 0.01
 
@@ -88,10 +87,9 @@ def main():
     assert len(diameters_TP) == len(diameters_TP_GT) == len(confidence_TP)
     assert len(confidence_FP) == len(confidence_FP)
 
-    try:
-        epoch = int([s for s in predictions_dir[0].split("/") if "epochs" in s][0].split('_')[0]) if isinstance(predictions_dir, list) else int([s for s in predictions_dir.split("/") if "epochs" in s][0].split('_')[0])
-    except:
-        epoch = 60
+    # predict.py writes to Predictions/<epoch>_epochs/...
+    epoch_dir = re.search(r"(\d+)_epochs", predictions_dir)
+    epoch = epoch_dir.group(1) if epoch_dir else "unknown"
 
     ########################################################################################################
     # Confusion matrix
