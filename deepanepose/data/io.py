@@ -1,13 +1,11 @@
 import numpy as np
 import nibabel as ni
 import pandas as pd
-import os, json, glob, random, time
-from tqdm import tqdm
+import os, json, glob, time
 import sklearn
 
-from deepanepose.volume.selection import selectPoints, ConnectedComponents2Spheres
+from deepanepose.volume.selection import selectPoints
 from deepanepose.utils import get_logger
-from itertools import repeat
 
 from joblib import Parallel, delayed
 
@@ -217,26 +215,9 @@ def add_points_to_patient_data(da, pname, nb=None):
         d.update({'points':read_points_from_csv(os.path.join(d['dir'], pname), nb)})
     return da
 
-def saveSplit(cfg, train_list, valid_list, test_list):
-    '''
-    saves a list of patients (directories) split in train, validation and test lists into a json file (cfg), with keys 'training list', 
-    'validation list' and 'testing list'
-    If the file already exists, it is updated, eventually with new keys as above, else it is created with these three keys.
-    '''
-    d = {}
-    if os.path.isfile(cfg):
-        with open(cfg,'r') as f:
-            d = json.load(f)
-    d['training list'] = train_list
-    d['validation list'] = valid_list
-    d['testing list'] = test_list
-    with open(cfg, 'w') as f:
-        json.dump(d, f, indent=4)
-
 def readSplit(cfg):
     '''
     reads a split list of patients (directories), in a json file with keys 'training list', 'validation list' and 'testing list'
-    see also saveSplit()
     '''
     with open(cfg, 'r') as f:
         d = json.load(f)
@@ -257,38 +238,6 @@ def csv2fcsv(csv_pathname):
         f.write(head)
         for i,l in df.iterrows():
             f.write(','.join([f'{v}' for v in l])+'\n')
-
-def fcsv2csv(fcsv_file):
-    filename, file_extension = os.path.splitext(fcsv_file)
-    assert file_extension == '.fcsv', "Please choose a file with '.fcsv' extension"
-
-    with open(fcsv_file, 'r') as f:
-        l=f.readlines()
-
-    # coordinate system
-    cs=l[1].strip().split('=')[1].strip()
-
-    # column names
-    cn=list(map(str.strip,l[2].split('=')[1].split(',')))
-    # data
-    data=[s.strip().split(',') for s in l[3:]]
-    # check coordinate systems and column names
-    # RAS: if cs='RAS' or cs='0'
-    # LPS: if cs='LPS' or cs='1'
-    # not checking for position column names (could be x,y,z or l,p,s or r,a,s
-    if cs == 'LPS' or cs == '1':
-        for d in data:
-            d[1] = str(-float(d[1]))
-            d[2] = str(-float(d[2]))
-    # change position column names
-    cn[1:4] = ['x','y','z']
-    if len(cn) < len(data[0]): 
-        cn = cn + [None, None]
-
-    # create data frame
-    d=pd.DataFrame(data=data, columns=cn)
-    # save the result
-    d.to_csv(filename + ".csv", index=False)
 
 def extractPointsFromPatient(patient, r=20, nbPoints=100, outfile="points.csv", randomPoints=False, truth_file=None):
     '''
@@ -331,7 +280,6 @@ def extractPointsFromPatient(patient, r=20, nbPoints=100, outfile="points.csv", 
         print(f'{len(q)} Parenchyma points')
 
     # export to csv using pandas
-    #print(f'Exporting to CSV')
     ps = pd.DataFrame(p, columns=list('xyz'))
     ps['type'] = pd.Categorical([title] * len(p))
     if q is not None:
@@ -342,11 +290,6 @@ def extractPointsFromPatient(patient, r=20, nbPoints=100, outfile="points.csv", 
         points = ps
     points.to_csv(os.path.join(patient, outfile))
     csv2fcsv(os.path.join(patient, outfile))
-
-def extractPoints(dataPath, r = 20, nbPoints=100, outfile="points.csv", randomPoints = False):
-    patients = fetch_patient_dirs(dataPath)
-    for patient in patients:
-        extractPointsFromPatient(patient, r=r, nbPoints=nbPoints, outfile=outfile, randomPoints=randomPoints)
 
 def SizeAnev(p, truth_file):
     '''

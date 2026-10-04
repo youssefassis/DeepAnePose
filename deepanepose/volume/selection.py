@@ -1,7 +1,6 @@
 import numpy as np
 import sklearn.neighbors as skn
 import scipy.ndimage as sndi
-import skimage.measure as skme
 from scipy.ndimage import label
 from scipy.spatial import ConvexHull
 from scipy.spatial.distance import cdist
@@ -19,20 +18,6 @@ def extractPointsThres(vol,vox2met,thresLow, thresHigh):
     p=vox2met[:3,:]@np.vstack((idx,np.ones(len(v))))+(0.5*vox2met[:3,:3]@np.ones(3)).reshape((-1,1))
 
     return p.T,v
-
-def pointsInRadius(q,p,r):
-    '''
-    return the indices of all points from p within distance r from q
-    (p=point set, q=query point)
-    p should be a Nx3 array and q a 3-point or Nx3 array of points
-    (work ok in dimensions D!=3 too)
-    '''
-    if len(q.shape) == 1:
-        Qq=np.array(q)[np.newaxis,:]
-    else:
-        Qq=q
-    tree=skn.KDTree(p)
-    return np.unique(np.concatenate(tree.query_radius(Qq,r)))
 
 def selectPoints(vol,vox2met,thresLow,r,thresHigh=None,fPoints=None,
                  nbPoints=None, extractType='Vessels'):
@@ -62,11 +47,6 @@ def selectPoints(vol,vox2met,thresLow,r,thresHigh=None,fPoints=None,
         thresHigh=np.max(vol.ravel())
     p,v=extractPointsThres(vol,vox2met,thresLow,thresHigh)
 
-    # compute volume boundaries in metric space
-    #E=vox2met[:3,:]@np.vstack((np.array([0,0,0,1]),np.array(vol.shape)))
-    #cm=np.min(E,axis=0)
-    #cM=np.max(E,axis=0)
-    # remove points too close to boundaries
     if (nbPoints is None) or (nbPoints > len(v)):
         nbPoints = len(v)
 
@@ -214,12 +194,6 @@ def ConnectedComponents2Spheres(vol, vox2met, min_score=0.01):
         v=(P2-P1)/2
         P1=cog-v
         P2=cog+v
-
-        # alternative: through volume
-        #        voxel_size = np.linalg.norm(vox2met[:3,:3],axis=0)
-        #        voxel_volume = np.prod(voxel_size)
-        #        sphere_volume = vpos.shape[1] * voxel_volume
-        #        r = (sphere_volume * 3/(4*np.pi))**(1/3)
         spheres = np.vstack((spheres, np.hstack((cog, r, score))))
         points = np.vstack((points, np.hstack((P1,P2))))
 
