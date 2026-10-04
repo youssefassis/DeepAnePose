@@ -276,13 +276,10 @@ def ndl_run_validation_cases(pat_list, device, model, patch_size, patch_dim, inp
         os.makedirs(output_dir)
     # Loop over patients
     for p in pat_list:
-        # Load volume data and apply normalization
-        pat_db = dio.read_patient_data_base([p], volume=input_volume, normalize=normalization, log=False)
-        
-        patient_name = os.path.basename(p)
-        if "CHUV" in pat_db[0]["dir"]:
-            patient_name = pat_db[0]["dir"][pat_db[0]["dir"].find('sub'): ].replace("/", '').replace('-', '').replace('_', '')
+        patient_name = dio.patient_name(p)
         if not os.path.isfile(os.path.join(output_dir, patient_name)+".json"):
+            # Load volume data and apply normalization
+            pat_db = dio.read_patient_data_base([p], volume=input_volume, normalize=normalization, log=False)
             # Inference
             ndl_run_validation_case(pat_db[0],
                                     device, 
