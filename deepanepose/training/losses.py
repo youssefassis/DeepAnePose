@@ -1,6 +1,6 @@
 import torch
 from torch import nn as nn
-from utils import get_logger
+from deepanepose.utils import get_logger
 
 logger = get_logger("Loss function")
 

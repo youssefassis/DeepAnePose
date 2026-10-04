@@ -58,34 +58,33 @@ To use our code, follow the following steps:
     git clone https://gitlab.inria.fr/yassis/DeepAnePose.git
     cd DeepAnePose
     ```
-2. Install the dependencies with [uv](https://docs.astral.sh/uv/) (`--extra cu126` for an NVIDIA GPU, `--extra cpu` otherwise), and add the source folders to the `PYTHONPATH`; the commands below then run with `uv run`:
+2. Install the project with [uv](https://docs.astral.sh/uv/) (`--extra cu126` for an NVIDIA GPU, `--extra cpu` otherwise); the commands below then run from the repository folder with `uv run`:
     ```
     uv sync --extra cu126
-    export PYTHONPATH="$PWD/dataStrategy:$PWD/models:$PWD/resources:$PYTHONPATH"
     ```
 3. Generate the "noskull.nii.gz" file: Use the "[removeSkull.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/removeSkull.py).py" file to remove the skull from the patient's data. Execute the following command:
     ```
-    python resources/scripts/removeSkull.py
+    uv run python scripts/remove_skull.py
     ```
 4. Generate the "points.csv" file: Utilize the "[extractPoints.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/extractPoints.py)" file to extract the relevant negative patches center from each patient's data. Execute the following command:
     ```
-    python resources/scripts/extractPoints.py
+    uv run python scripts/extract_points.py
     ```
 
 ### Traning
 1. After creating the patient data, the next step is to generate a customized training sample, such as the "Train001" directory. To accomplish this, edit the "[prepare.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/prepare.py)" file and execute the following command:
    ```
-    python prepare.py
+    uv run python scripts/prepare.py
     ```
 2. Once this is done, you will have a configuration file generated in the "Train001/ndl_config.json" location. This configuration file will serve as the basis for training.
 To start (or resume) the training phase, we will use the "[train.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/train.py)" file:
     ```
-    python resources/scripts/train.py path/to/Train001
+    uv run python scripts/train.py path/to/Train001
     ```
 ### Inference
 - Based on the models checkpoints generated after training, use the script "[predict.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/predict.py)" to perform inference by running:
     ```
-    python resources/scripts/predict.py path/to/Train001
+    uv run python scripts/predict.py path/to/Train001
     ```
     The generated predictions can be found in the "path/to/Train001/**Predictions**" directory. The predictions for each patient are saved in a separate JSON file. Each prediction contains the following information:<br>
     - Center coordinates of the aneurysm neck (P1) in mm;
@@ -107,7 +106,7 @@ To start (or resume) the training phase, we will use the "[train.py](https://git
 ### Evaluation
 - To evaluate the performance of the model (i.e., generated Predictions) compared to the ground truth annotations, use the file "[evaluate.py](https://gitlab.inria.fr/yassis/DeepAnePose/-/blob/main/resources/scripts/evaluate.py)" and run the following command:
     ```
-    python resources/scripts/evaluate.py path/to/Train001
+    uv run python scripts/evaluate.py path/to/Train001
     ```
     After running the evaluation script, the results will be generated are generated as a PNG figure that summarizes the performance of the model based on multiple metrics (pose estimation and object detection). The figure can be found in the "path/to/Train001/Predictions/**Evaluation\@0.1.png**" directory.
     

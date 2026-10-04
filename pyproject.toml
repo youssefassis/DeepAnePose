@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "deepanepose"
 version = "0.1.0"
@@ -30,8 +34,6 @@ cu126 = ["torch>=2.3"]
 dev = ["pytest", "ruff"]
 
 [tool.uv]
-# dependencies only, until the code becomes the deepanepose package
-package = false
 conflicts = [[{ extra = "cpu" }, { extra = "cu126" }]]
 
 [tool.uv.sources]
@@ -50,9 +52,12 @@ name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
+[tool.setuptools.packages.find]
+include = ["deepanepose*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["dataStrategy", "models", "resources", "resources/scripts"]
+pythonpath = ["scripts"]
 
 [tool.ruff]
 line-length = 120

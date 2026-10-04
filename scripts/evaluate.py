@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os, json, random, re, sys, cmath
 import matplotlib.pyplot as plt
 from sklearn.metrics import auc
@@ -7,9 +6,8 @@ import statistics
 import numpy as np
 import pandas as pd
 
-import Data.IO as dio
-import evaluation 
-
+from deepanepose.data import io as dio
+from deepanepose.inference import evaluation
 def summarize(values):
     '''
     Returns (mean, std, median, max, min) of values, all nan when there is no value (e.g. no true positive)

@@ -51,10 +51,10 @@ def train(model_config):
     """Trains (or resumes training) the tiny model up to n_epochs on two 40mm patients and returns its trainer."""
     import numpy as np
 
-    from dataset import getDataloaders
-    from losses import get_loss_criterion
-    from trainer import create_trainer
-    from utils import get_model, get_optimizer_scheduler
+    from deepanepose.training.dataset import getDataloaders
+    from deepanepose.training.losses import get_loss_criterion
+    from deepanepose.training.trainer import create_trainer
+    from deepanepose.utils import get_model, get_optimizer_scheduler
 
     rng = np.random.default_rng(0)
     patients = [
