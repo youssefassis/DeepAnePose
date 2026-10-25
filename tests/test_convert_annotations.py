@@ -4,8 +4,8 @@ from pathlib import Path
 
 import numpy as np
 
+from deepanepose.cli.convert_annotations import convert_annotations
 from deepanepose.data import io as dio
-from convert_annotations import convert_annotations
 
 ANNOTATION = Path(__file__).parents[1] / "reproducibility" / "annotations" / "sub-026_ses-20101106.json"  # 2 aneurysms
 

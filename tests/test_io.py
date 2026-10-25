@@ -20,7 +20,7 @@ def test_extract_points_script_handles_patients_with_and_without_aneurysm(tmp_pa
 
     import pandas as pd
 
-    import extract_points
+    from deepanepose.cli import extract_points
 
     monkeypatch.chdir(tmp_path)
     vol = np.random.default_rng(0).random((30, 30, 30)).astype(np.float32)
