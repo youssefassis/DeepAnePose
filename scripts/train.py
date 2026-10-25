@@ -3,11 +3,11 @@ import sys
 import torch
 
 from deepanepose.utils import get_optimizer_scheduler, get_model, load_training_config
-from deepanepose.data.io import add_points_to_patient_data, readSplit, read_patient_data_base
+from deepanepose.data.io import add_points_to_patient_data, read_split, read_patient_data_base
 from deepanepose.training.losses import get_loss_criterion
 
 from deepanepose.training.trainer import create_trainer
-from deepanepose.training.dataset import getDataloaders
+from deepanepose.training.dataset import get_dataloaders
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
 
     # Data Preparation
     ## Load patients
-    train_list, valid_list, _ = readSplit(config["split_file"], config.get("base_dir"))
+    train_list, valid_list, _ = read_split(config["split_file"], config.get("base_dir"))
     ## Load training and validation patches
     train_db = add_points_to_patient_data(
         read_patient_data_base(
@@ -55,7 +55,7 @@ def main():
         else None
     )
     # Create datasets and data loaders
-    loaders, iterations = getDataloaders(train_db=train_db, valid_db=valid_db, config=config, workers=workers)
+    loaders, iterations = get_dataloaders(train_db=train_db, valid_db=valid_db, config=config, workers=workers)
     # Create optimizer & scheduler
     warmup_steps = iterations["train"] * config["warmEpochs"] if "warmEpochs" in config else 0
     optimizer, scheduler = get_optimizer_scheduler(model=model, config=config, warmup_steps=warmup_steps)

@@ -61,4 +61,4 @@ def test_relative_split_entries_are_taken_from_the_data_folder(tmp_path):
         json.dumps({"training list": ["sub-001/ses-1"], "validation list": [], "testing list": ["/abs/P0001"]})
     )
 
-    assert dio.readSplit(str(split), "/data") == (["/data/sub-001/ses-1"], [], ["/abs/P0001"])
+    assert dio.read_split(str(split), "/data") == (["/data/sub-001/ses-1"], [], ["/abs/P0001"])
