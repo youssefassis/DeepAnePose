@@ -162,7 +162,7 @@ fold1/                           one training
 ```
 
 ## Requirements
-- **Memory:** training keeps the training and validation scans in memory, 8 bytes per voxel: 300 MiB for a
+- **Memory:** training keeps the training and validation scans in memory, 4 bytes per voxel: 150 MiB for a
   512×512×150 scan.
 - **GPU:** the network has 34.1 M parameters (130 MiB). Its memory use comes mostly from the batch of 32 patches of
   96³ voxels, with mixed precision; if the GPU runs out of memory, lower `batch_size`.
