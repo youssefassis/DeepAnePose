@@ -20,6 +20,7 @@ TINY_TRAINING = [
     "drop_last=false",
     "negative_patches=50",
     "num_workers=0",
+    "validation_batch_size=2",
     "augmentation.positive.duplicates=2",
     *[
         f"augmentation.{kind}.{aug}=null"
@@ -96,7 +97,8 @@ def evaluation_fold(tmp_path):
 def train(tmp_path):
     """
     Trains (or resumes training) the tiny model up to n_epochs on two 40mm patients, with Hydra overrides of the
-    training config, in train_dir (tmp_path by default); returns its trainer.
+    training config, in train_dir (tmp_path by default), validating on the same patients with validation=True;
+    returns its trainer.
     """
     import numpy as np
     from hydra.utils import instantiate
@@ -118,9 +120,9 @@ def train(tmp_path):
         for i in (1, 2)
     ]
 
-    def run(n_epochs, *overrides, train_dir=tmp_path):
+    def run(n_epochs, *overrides, train_dir=tmp_path, validation=False):
         cfg = compose_config("train", [*TINY_TRAINING, f"data_dir={tmp_path}", f"epochs={n_epochs}", *overrides])
-        loaders, iterations = get_dataloaders(patients, None, cfg)
+        loaders, iterations = get_dataloaders(patients, patients if validation else None, cfg)
         model = get_model(cfg.model)
         optimizer = instantiate(cfg.optimizer, params=model.parameters(), _convert_="all")
         warmup_epochs = cfg.scheduler.warmup_epochs

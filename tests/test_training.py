@@ -56,3 +56,21 @@ def test_checkpoints_load_without_unpickling_objects(train, tmp_path, schedule):
     resumed = train(2, *overrides)
 
     assert state["epoch"] == 1 and resumed.num_epoch == 2
+
+
+def test_validation_keeps_the_best_checkpoint_across_resumes(train, tmp_path):
+    import torch
+
+    first = train(1, validation=True)
+    assert (tmp_path / "best_checkpoint.pytorch").is_file()
+    assert first.best_valid_loss == torch.load(tmp_path / "last_checkpoint.pytorch")["best_valid_loss"] < float("inf")
+
+    resumed = train(2, validation=True)
+
+    assert resumed.best_valid_loss <= first.best_valid_loss
+
+
+def test_training_without_validation_keeps_no_best_checkpoint(train, tmp_path):
+    train(1)
+
+    assert not (tmp_path / "best_checkpoint.pytorch").exists()

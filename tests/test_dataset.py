@@ -1,9 +1,7 @@
 import numpy as np
 import pytest
 
-from deepanepose.training.dataset import Dataset
-
-NO_AUGMENTATION = {"shift": None, "rotation": None, "distortion": None, "scaling": None}
+from deepanepose.training.dataset import NO_AUGMENTATION, Dataset
 
 # an aneurysm straddling the border of the 8 mm patch centered at (20, 20, 20)
 STRADDLING = {
