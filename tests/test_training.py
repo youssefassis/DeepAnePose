@@ -41,3 +41,18 @@ def test_training_on_cpu_does_not_ask_for_cuda(train, recwarn):
     train(1, "mixed_precision=true")
 
     assert [str(w.message) for w in recwarn if "CUDA" in str(w.message)] == []
+
+
+@pytest.mark.parametrize("schedule", ["WarmupPoly", "ReduceLROnPlateau"])
+def test_checkpoints_load_without_unpickling_objects(train, tmp_path, schedule):
+    import torch
+
+    overrides = [f"scheduler.name={schedule}"] + (
+        ["+scheduler.factor=0.5", "+scheduler.patience=1"] if "Plateau" in schedule else []
+    )
+    train(1, *overrides)
+
+    state = torch.load(tmp_path / "last_checkpoint.pytorch", weights_only=True)
+    resumed = train(2, *overrides)
+
+    assert state["epoch"] == 1 and resumed.num_epoch == 2
