@@ -86,7 +86,7 @@ def train(model_config):
     """Trains (or resumes training) the tiny model up to n_epochs on two 40mm patients and returns its trainer."""
     import numpy as np
 
-    from deepanepose.training.dataset import getDataloaders
+    from deepanepose.training.dataset import get_dataloaders
     from deepanepose.training.losses import get_loss_criterion
     from deepanepose.training.trainer import create_trainer
     from deepanepose.utils import get_model, get_optimizer_scheduler
@@ -105,7 +105,7 @@ def train(model_config):
 
     def run(n_epochs, **overrides):
         config = {**model_config, "n_epochs": n_epochs, **overrides}
-        loaders, iterations = getDataloaders(patients, None, config, workers=0)
+        loaders, iterations = get_dataloaders(patients, None, config, workers=0)
         model = get_model(config)
         optimizer, scheduler = get_optimizer_scheduler(
             model, config, warmup_steps=iterations["train"] * config["warmEpochs"]
