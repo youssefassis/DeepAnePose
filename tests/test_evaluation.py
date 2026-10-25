@@ -3,7 +3,7 @@ import pandas as pd
 
 matplotlib.use("Agg")
 
-import evaluate  # noqa: E402
+from deepanepose.cli import evaluate  # noqa: E402
 
 
 def test_evaluate_script_writes_the_detection_table_and_figure(evaluation_fold, monkeypatch):

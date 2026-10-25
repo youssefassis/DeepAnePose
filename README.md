@@ -38,7 +38,7 @@ git clone https://github.com/youssefassis/DeepAnePose.git && cd DeepAnePose
 uv sync --extra cu126    # NVIDIA GPU (CUDA 12.6)
 uv sync --extra cpu      # or CPU only
 ```
-Commands run from the repository folder with `uv run`.
+The pipeline steps are installed as `deepanepose-*` commands, run with `uv run`.
 
 ## Data
 Each patient is a folder, either `P0001`-like or `sub-XXX/ses-YYYYMMDD` as in the public dataset:
@@ -48,23 +48,23 @@ Data/
     volume.nii.gz    TOF-MRA scan
     aneurysms.csv    aneurysms: two points (x, y, z columns, in mm) per aneurysm, see Annotation
     config.json      {"init volume": "volume.nii.gz", "pts aneurysm": "aneurysms.csv"}
-    noskull.nii.gz   skull-stripped scan (written by remove_skull.py)
-    points.csv       negative patch centers (written by extract_points.py)
+    noskull.nii.gz   skull-stripped scan (written by deepanepose-remove-skull)
+    points.csv       negative patch centers (written by deepanepose-extract-points)
 ```
 Patients without aneurysm have no `aneurysms.csv`. A split file lists the training, validation and testing patient
 folders, as in `reproducibility/fold1.json`.
 
 ## Usage
 ```
-uv run python scripts/remove_skull.py Data/P*                                          # 1. skull stripping
-uv run python scripts/extract_points.py Data/P*                                        # 2. negative patch centers
-uv run python scripts/prepare.py Data Work reproducibility/fold1.json --name Train001   # 3. training folder
-uv run python scripts/train.py Work/Train001                                           # 4. training (or resume)
-uv run python scripts/predict.py Work/Train001                                         # 5. prediction
-uv run python scripts/evaluate.py Work/Train001/Predictions/<n>_epochs/Validation_0.01/None_detections_per_patch
+uv run deepanepose-remove-skull Data/P*                                        # 1. skull stripping
+uv run deepanepose-extract-points Data/P*                                      # 2. negative patch centers
+uv run deepanepose-prepare Data Work reproducibility/fold1.json --name Train001 # 3. training folder
+uv run deepanepose-train Work/Train001                                         # 4. training (or resume)
+uv run deepanepose-predict Work/Train001                                       # 5. prediction
+uv run deepanepose-evaluate Work/Train001/Predictions/<n>_epochs/Validation_0.01/None_detections_per_patch
 ```
-- `prepare.py` writes `Work/Train001/ndl_config.json`; the other training settings (model, loss, patch size,
-  augmentation, optimizer...) are set in the script.
+- `deepanepose-prepare` writes `Work/Train001/ndl_config.json`; the other training settings (model, loss, patch size,
+  augmentation, optimizer...) are set in `deepanepose/cli/prepare.py`.
 - Training saves `last_checkpoint.pytorch` and TensorBoard logs in the training folder.
 - Prediction runs on the validation and testing patients of the split, and writes one JSON file per patient
   (`P0001.json`, `sub-013_ses-20101220.json`). Each detection has its neck (P1) and dome (P2) points, center and
@@ -92,10 +92,10 @@ in the volume rendering view, with a real-time display of the sphere in the cano
   [OpenNeuro ds003949](https://openneuro.org/datasets/ds003949/)), one JSON file per subject. Write them as the
   `aneurysms.csv` of each patient folder with:
   ```
-  uv run python scripts/convert_annotations.py reproducibility/annotations Data
+  uv run deepanepose-convert-annotations reproducibility/annotations Data
   ```
 - `reproducibility/fold1.json` to `fold5.json`: the 5-fold cross-validation splits. Their patient folders are
-  relative to the data folder given to `prepare.py`.
+  relative to the data folder given to `deepanepose-prepare`.
 
 ## Citation
 ```
