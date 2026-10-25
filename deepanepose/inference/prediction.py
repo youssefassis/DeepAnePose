@@ -146,75 +146,48 @@ def ndl_patch_wise_prediction(
     margin=0,
     batch_size=1,
     patient_name="",
-    S=None,
 ):
+    """
+    Returns the detections of a whole volume, in voxel coordinates, predicted by a model working on patches of
+    patch_shape voxels. Patches overlap by 2 * margin voxels and only keep the detections centered in their core
+    (without margin); the volume is padded (with its minimum value) so that every voxel, borders included, lies in
+    the core of exactly one patch.
+    """
     torch.cuda.empty_cache()
-    image_shape = np.array(data.shape)
+    patch_shape = np.asarray(patch_shape, dtype=int)
+    margin = np.broadcast_to(np.asarray(margin, dtype=int), patch_shape.shape)
+    core = patch_shape - 2 * margin
+    if np.any(core <= 0):
+        raise ValueError(f"margin {margin.tolist()} leaves no core in patches of {patch_shape.tolist()} voxels")
+    image_shape = np.asarray(data.shape)
+    n_tiles = np.ceil(image_shape / core).astype(int)
+    pad_after = n_tiles * core - image_shape + margin
+    padded = np.pad(data, list(zip(margin, pad_after)), mode="constant", constant_values=data.min())
+    starts = np.mgrid[: n_tiles[0], : n_tiles[1], : n_tiles[2]].reshape((3, -1)).T * core
+
     patient_boxes = []
-    if isinstance(margin, int):
-        margin = np.asarray([margin] * len(image_shape))
-
-    delta = np.array(patch_shape) - 2 * margin
-    n_idx = np.floor((image_shape - 2 * margin) / delta).astype(np.int64)
-    overflow = image_shape - (n_idx * delta + 2 * margin)
-    start = overflow // 2
-    indices = np.mgrid[: n_idx[0], : n_idx[1], : n_idx[2]].reshape((3, -1)).T
-    indices = indices * delta + start
-
-    total_batches = int(math.ceil(indices.shape[0] / batch_size))
-    loop = tqdm(range(0, indices.shape[0], batch_size), colour="GREEN", leave=True, unit="batch", total=total_batches)
-
+    loop = tqdm(range(0, len(starts), batch_size), leave=True, unit="batch", total=math.ceil(len(starts) / batch_size))
     for j in loop:
-        k = min(j + batch_size, len(indices))
-        idx = indices[j:k]
-        batch = np.asarray(
-            [
-                data[
-                    np.newaxis, i[0] : i[0] + patch_shape[0], i[1] : i[1] + patch_shape[1], i[2] : i[2] + patch_shape[2]
-                ]
-                for i in idx
-            ]
-        )
-        input_shape = list(batch.shape[-3:])
-
+        idx = starts[j : j + batch_size]
+        batch = np.stack([padded[(np.newaxis,) + tuple(slice(s, s + p) for s, p in zip(i, patch_shape))] for i in idx])
         spheres = model(torch.from_numpy(batch).float().to(device))
         spheres = torch.cat((spheres[0][1], spheres[0][2], spheres[0][0]), -1).to("cpu")  # first scale only
 
-        for patch_spheres, origin in zip(spheres, idx):  # each patch of the batch
-            boxes = cells_to_spheres(patch_spheres, obj_thresh=0.01, input_shape=input_shape)
-
-            # filter boxes/ patch borders: according to detection center
-            boxes = [
-                box
-                for box in boxes
-                if (
-                    box[0] >= margin[0]
-                    and box[1] >= margin[1]
-                    and box[2] >= margin[2]
-                    and box[0] < margin[0] + delta[0]
-                    and box[1] < margin[1] + delta[1]
-                    and box[2] < margin[2] + delta[2]
-                )
-            ]
-
+        for patch_spheres, start in zip(spheres, idx):  # each patch of the batch
+            boxes = cells_to_spheres(patch_spheres, obj_thresh=0.01, input_shape=list(patch_shape))
+            boxes = [box for box in boxes if np.all((box[:3] >= margin) & (box[:3] < margin + core))]
             boxes = non_max_suppression(boxes, iou_threshold=iou_threshold)
             if detections_per_patch is not None:
                 boxes = boxes[:detections_per_patch]
 
-            # transform coords from patch dimension to the global volume dimension
+            # from patch to volume coordinates: the patch starts at start - margin in the unpadded volume
+            offset = start - margin
             for box in boxes:
-                box[0] = box[0] + origin[0]  # x
-                box[1] = box[1] + origin[1]  # y
-                box[2] = box[2] + origin[2]  # z
+                box[0:6] = [float(c + o) for c, o in zip(box[0:6], np.tile(offset, 2))]  # center, then neck (P1)
+            patient_boxes += [box for box in boxes if np.all(box[:3] < image_shape)]  # not centered in the padding
 
-                box[3] = box[3] + origin[0]  # x
-                box[4] = box[4] + origin[1]  # y
-                box[5] = box[5] + origin[2]  # z
-            patient_boxes += boxes
-
-        loop.set_description(f"{patient_name} ({indices.shape[0]} patches; {len(patient_boxes)} detections)")
-    patient_boxes = non_max_suppression(patient_boxes, iou_threshold=iou_threshold)
-    return np.zeros(data.shape).astype("float32"), patient_boxes
+        loop.set_description(f"{patient_name} ({len(starts)} patches; {len(patient_boxes)} detections)")
+    return non_max_suppression(patient_boxes, iou_threshold=iou_threshold)
 
 
 def ndl_run_validation_case(
@@ -231,7 +204,6 @@ def ndl_run_validation_case(
     iou_threshold,
     detections_per_patch,
     patient_wise_tta,
-    S=None,
 ):
     """
     Runs a test case and writes predicted coordinates to file.
@@ -255,7 +227,7 @@ def ndl_run_validation_case(
     new_spacing = np.array(size) / np.array(dim)
     vol = resample_to_spacing(test_data, old_spacing, new_spacing)
 
-    prediction, spheres1 = ndl_patch_wise_prediction(
+    spheres1 = ndl_patch_wise_prediction(
         device,
         model=model,
         data=vol,
@@ -263,7 +235,6 @@ def ndl_run_validation_case(
         margin=margin,
         batch_size=batch_size,
         patient_name=patient_name,
-        S=S,
         iou_threshold=iou_threshold,
         detections_per_patch=detections_per_patch,
     )
@@ -278,7 +249,7 @@ def ndl_run_validation_case(
     if patient_wise_tta and len(mirror_axes) > 0:
         for axis in mirror_axes:
             data = np.flip(vol, axis=axis)
-            prediction, spheres2 = ndl_patch_wise_prediction(
+            spheres2 = ndl_patch_wise_prediction(
                 device,
                 model=model,
                 data=data,
@@ -286,7 +257,6 @@ def ndl_run_validation_case(
                 margin=margin,
                 batch_size=batch_size,
                 patient_name=patient_name,
-                S=S,
                 iou_threshold=iou_threshold,
                 detections_per_patch=detections_per_patch,
             )
@@ -315,7 +285,6 @@ def ndl_run_validation_cases(
     batch_size=1,
     mirror_axes=[0],
     do_tta=False,
-    scales=[12],
     iou_threshold=0.01,
     detections_per_patch=10,
 ):
@@ -334,7 +303,6 @@ def ndl_run_validation_cases(
         - batch_size (integer): the number of patches to process in each batch
         - do_tta (boolean): whether to perform test-time augmentation (TTA) during processing
         - mirror_axes (list): a list of axes to mirror the input image along if TTA is True
-        - scales (list): a list of scales at which to process the input image (used for multi-scale testing)
         - iou_threshold (float): the intersection over union (IoU) threshold above which two aneurysm detections are considered a match
         - detections_per_patch (integer): the maximum number of aneurysm detections to output for each patch
     """
@@ -360,7 +328,6 @@ def ndl_run_validation_cases(
                 batch_size=batch_size,
                 mirror_axes=mirror_axes,
                 patient_wise_tta=do_tta,
-                S=scales,
                 iou_threshold=iou_threshold,
                 detections_per_patch=detections_per_patch,
             )
