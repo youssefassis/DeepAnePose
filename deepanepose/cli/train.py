@@ -6,6 +6,7 @@ configuration (.hydra/) are written to <data_dir>/0Work/<name>. Running the same
 checkpoint.
 """
 
+import json
 import os
 
 import hydra
@@ -17,7 +18,7 @@ from deepanepose.data.io import add_points_to_patient_data, read_patient_data_ba
 from deepanepose.training.dataset import get_dataloaders
 from deepanepose.training.losses import get_loss_criterion
 from deepanepose.training.trainer import create_trainer
-from deepanepose.utils import create_lr_scheduler, get_model
+from deepanepose.utils import create_lr_scheduler, get_model, run_info, seed_everything
 
 
 def load_patients(pat_list, data_cfg, label, workers):
@@ -37,6 +38,12 @@ def load_patients(pat_list, data_cfg, label, workers):
 @hydra.main(version_base="1.3", config_path="../configs", config_name="train")
 def main(cfg):
     train_dir = HydraConfig.get().runtime.output_dir
+    if cfg.seed is not None:
+        seed_everything(cfg.seed)
+    torch.backends.cudnn.benchmark = not cfg.deterministic
+    torch.backends.cudnn.deterministic = cfg.deterministic
+    with open(os.path.join(train_dir, "run_info.json"), "w") as f:
+        json.dump(run_info(seed=cfg.seed), f, indent=2)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = get_model(cfg.model, weight_init=cfg.weight_init, device=device)
