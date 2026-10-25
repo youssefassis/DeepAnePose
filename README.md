@@ -107,7 +107,8 @@ uv run deepanepose-remove-skull data_dir=Data
 uv run deepanepose-extract-points data_dir=Data
 ```
 
-**2. Training:** outputs go to `Data/0Work/fold1`; running the same command again resumes the training.
+**2. Training:** on the training patients, with the validation loss computed after each epoch; outputs go to
+`Data/0Work/fold1`, and running the same command again resumes the training.
 ```
 uv run deepanepose-train data_dir=Data data.split_file=reproducibility/fold1.json name=fold1
 ```
@@ -116,7 +117,7 @@ uv run deepanepose-train data_dir=Data data.split_file=reproducibility/fold1.jso
 default, to `prediction/<epochs>_epochs`. Each detection has its neck (P1) and dome (P2) points, center and radius in
 mm, and a confidence between 0 and 1:
 ```
-uv run deepanepose-predict train_dir=Data/0Work/fold1       # checkpoint=150_checkpoint.pytorch tta=false
+uv run deepanepose-predict train_dir=Data/0Work/fold1       # checkpoint=best_checkpoint.pytorch tta=false
 ```
 ```
 {"0": {"P1": [x, y, z], "P2": [x, y, z], "center": [x, y, z], "radius": 2.86, "confidence": 0.996}}
@@ -152,6 +153,7 @@ fold1/                           one training
   .hydra/config.yaml             resolved configuration, read back by deepanepose-predict and deepanepose-evaluate
   run_info.json                  git commit and library versions
   last_checkpoint.pytorch        model after the last epoch, used for prediction by default
+  best_checkpoint.pytorch        model with the lowest validation loss
   <epoch>_checkpoint.pytorch     model every save_every (10) epochs
   logs/                          TensorBoard logs: uv run tensorboard --logdir Data/0Work
   train.log
