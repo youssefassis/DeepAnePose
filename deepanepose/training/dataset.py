@@ -13,26 +13,30 @@ from deepanepose.training.batch_sampler import BalancedBatchSampler
 
 logger = get_logger("Dataset")
 
+MAX_PATCH_ATTEMPTS = 100  # augmentations drawn for a patch until its aneurysms are wholly inside or outside it
+NO_AUGMENTATION = {"shift": None, "rotation": None, "distortion": None, "scaling": None}
+
 
 def get_dataloaders(train_db, valid_db, cfg):
     """
     Returns the training and validation data loaders (None without patients) and their numbers of batches.
     cfg: training configuration (see configs/train.yaml), providing data.patch_size, data.patch_shape, model.num_levels,
     augmentation, batch_size, validation_batch_size, balanced_batch, negative_patches, drop_last and num_workers.
-    Training batches hold a fixed share of negative patches with balanced_batch, else are randomly drawn.
+    Training batches hold a fixed share of negative patches with balanced_batch, else are randomly drawn. Validation
+    patches are neither augmented nor duplicated, so that the validation loss is comparable from one epoch to the next.
     """
     workers = min(cfg["num_workers"], os.cpu_count() or 1)
     augmentation = cfg["augmentation"]
     scales = [detection_grid_size(cfg["data"]["patch_shape"][0], cfg["model"]["num_levels"])]
 
-    def make_dataset(patches):
+    def make_dataset(patches, augment):
         return Dataset(
             patches=patches,
             size=list(cfg["data"]["patch_size"]),
             dim=list(cfg["data"]["patch_shape"]),
-            negative=augmentation["negative"],
-            positive=augmentation["positive"],
-            flip=augmentation["flip"],
+            negative=augmentation["negative"] if augment else NO_AUGMENTATION,
+            positive=augmentation["positive"] if augment else NO_AUGMENTATION,
+            flip=augmentation["flip"] if augment else {"probability": 0, "axes": [0]},
             scales=scales,
         )
 
@@ -43,7 +47,7 @@ def get_dataloaders(train_db, valid_db, cfg):
         train_patches, train_iterations = get_patches(
             pat_db=train_db, dup_ane=augmentation["positive"]["duplicates"], batch_size=cfg["batch_size"]
         )
-        train_dataset = make_dataset(train_patches)
+        train_dataset = make_dataset(train_patches, augment=True)
         if cfg["balanced_batch"]:
             sampler = BalancedBatchSampler(
                 patches=train_dataset.patches,
@@ -65,10 +69,10 @@ def get_dataloaders(train_db, valid_db, cfg):
 
     if valid_db is not None:
         valid_patches, valid_iterations = get_patches(
-            pat_db=valid_db, dup_ane=augmentation["positive"]["duplicates"], batch_size=cfg["validation_batch_size"]
+            pat_db=valid_db, dup_ane=1, batch_size=cfg["validation_batch_size"]
         )
         valid_generator = torch.utils.data.DataLoader(
-            dataset=make_dataset(valid_patches),
+            dataset=make_dataset(valid_patches, augment=False),
             batch_size=cfg["validation_batch_size"],
             shuffle=False,
             num_workers=workers,
@@ -124,10 +128,9 @@ class Dataset(torch.utils.data.Dataset):
         of transformation parameters to use based on the value of p['status']. If p['status']
         is True, it uses the positive transformation parameters; otherwise, it uses the negative
         transformation parameters.
-        An infinite loop is used to make sure that the augmented aneurysm points are fullt included
-        inside the patch volume and maintains a 1.2mm distance from the borders (see get_patch_and_aneurysms).
-        If the points are not fully covered inside the patch, new random transformations are
-        generated using the generate_transforms.
+        Random transformations (generate_transforms) are drawn again, up to MAX_PATCH_ATTEMPTS times, until no
+        aneurysm straddles the patch border (see get_patch_and_aneurysms). Without augmentation, the patch is kept
+        as it is: the straddling aneurysms are then left out of its targets.
         Once it has generated a fully-covered aneurysm, the method applies a random flip to the
         volume and associated aneurysms using the random_flip function.
         Finally, a list of targets for each scale is generated using the get_truth_from_aneurysms
@@ -141,8 +144,8 @@ class Dataset(torch.utils.data.Dataset):
             trans, rot, scal, dispc = self.pos_trans, self.pos_rot, self.pos_scal, self.pos_disp
         else:
             trans, scal, rot, dispc = self.neg_trans, self.neg_scal, self.neg_rot, self.neg_disp
-        repeat_patch_gen = True
-        while repeat_patch_gen:
+        augmented = any(amplitude is not None for amplitude in (trans, rot, scal, dispc))
+        for _ in range(MAX_PATCH_ATTEMPTS):
             affine, disp = generate_transforms(trans=trans, scal=scal, rot=rot, center=p["point"], disp=dispc)
             patch_data = get_patch_and_aneurysms(
                 vol=p["data"],
@@ -155,7 +158,13 @@ class Dataset(torch.utils.data.Dataset):
                 disp=disp,
             )
             v, aneurysms, fully_covered = patch_data["volume"], patch_data["aneurysms"], patch_data["fully_covered"]
-            repeat_patch_gen = not fully_covered
+            if fully_covered or not augmented:  # without augmentation, every attempt gives the same patch
+                break
+        else:
+            raise RuntimeError(
+                f"No augmentation of the patch centered at {p['point']} keeps every aneurysm wholly inside or outside it "
+                f"after {MAX_PATCH_ATTEMPTS} attempts"
+            )
         v, aneurysms = random_flip(
             data=[v, aneurysms], axes=self.flip_axis, patch_shape=self.dim, flip_probability=self.flip_prob
         )
