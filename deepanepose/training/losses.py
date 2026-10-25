@@ -63,9 +63,6 @@ class YOLO_Regression_Cosine_Loss(nn.Module):
 
 
 def get_loss_criterion(name):
-    assert name is not None, "Could not find any loss function"
-
     if name == "YOLO_Regression_Cosine_Loss":
         return YOLO_Regression_Cosine_Loss()
-    else:
-        raise RuntimeError(f"Unsupported loss function: '{name}'")
+    raise ValueError(f"Unsupported loss function '{name}', expected YOLO_Regression_Cosine_Loss")
