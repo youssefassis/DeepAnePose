@@ -1,0 +1,9 @@
+# One-stage aneurysm pose estimation network of the MICCAI 2023 paper
+_target_: deepanepose.models.yolo_orientation.YOLO_Orientation
+in_channels: 1
+f_maps: 64                       # filters of the first level, doubled at each level
+num_levels: 4                    # the detection grid has patch_shape / 2^(num_levels - 1) cells per side
+layer_order: cbl                 # conv, batchnorm, leaky ReLU
+pool_type: conv                  # strided convolutions (conv) or max pooling (max) between levels
+basic_module: ExtResNetBlock     # ExtResNetBlock or DoubleConv
+params_per_element: 6            # center (3) and neck-to-center vector (3) of each cell

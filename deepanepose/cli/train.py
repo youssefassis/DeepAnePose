@@ -1,67 +1,69 @@
+"""Train a model; configuration in deepanepose/configs/train.yaml.
+
+Example: deepanepose-train data_dir=/data data.split_file=reproducibility/fold1.json name=fold1
+Relative patient folders of the split file are taken from data_dir. Checkpoints, TensorBoard logs and the resolved
+configuration (.hydra/) are written to <data_dir>/0Work/<name>. Running the same command again resumes from the last
+checkpoint.
+"""
+
 import os
-import sys
+
+import hydra
 import torch
+from hydra.core.hydra_config import HydraConfig
+from hydra.utils import instantiate
 
-from deepanepose.utils import get_optimizer_scheduler, get_model, load_training_config
-from deepanepose.data.io import add_points_to_patient_data, read_split, read_patient_data_base
-from deepanepose.training.losses import get_loss_criterion
-
-from deepanepose.training.trainer import create_trainer
+from deepanepose.data.io import add_points_to_patient_data, read_patient_data_base, read_split
 from deepanepose.training.dataset import get_dataloaders
+from deepanepose.training.losses import get_loss_criterion
+from deepanepose.training.trainer import create_trainer
+from deepanepose.utils import create_lr_scheduler, get_model
 
 
-def main():
-    if len(sys.argv) != 2:
-        sys.exit(f"Usage: {sys.argv[0]} path/to/Train001")
-    config = load_training_config(sys.argv[1])
+def load_patients(pat_list, data_cfg, label, workers):
+    if not pat_list:
+        return None
+    patients = read_patient_data_base(
+        pat_list,
+        volume=data_cfg.volume,
+        pts_aneurysm=data_cfg.truth_file,
+        normalize=data_cfg.normalize,
+        label=label,
+        workers=workers,
+    )
+    return add_points_to_patient_data(patients, data_cfg.negative_patch_centers)
 
-    workers = min(12, os.cpu_count() or 1)  # data loading processes, at most one per CPU
-    # Device
+
+@hydra.main(version_base="1.3", config_path="../configs", config_name="train")
+def main(cfg):
+    train_dir = HydraConfig.get().runtime.output_dir
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Model
-    model = get_model(config, device=device)
+    model = get_model(cfg.model, weight_init=cfg.weight_init, device=device)
 
-    # Data Preparation
-    ## Load patients
-    train_list, valid_list, _ = read_split(config["split_file"], config.get("base_dir"))
-    ## Load training and validation patches
-    train_db = add_points_to_patient_data(
-        read_patient_data_base(
-            pat_list=train_list,
-            volume=config["volume"],
-            pts_aneurysm=config["truth file"],
-            normalize=config["normalize"],
-            label="Training",
-            workers=workers,
-        ),
-        config["negative patch centers"],
-        nb=None,
-    )
-    valid_db = (
-        add_points_to_patient_data(
-            read_patient_data_base(
-                pat_list=valid_list,
-                volume=config["volume"],
-                pts_aneurysm=config["truth file"],
-                normalize=config["normalize"],
-                label="Validation",
-                workers=workers,
-            ),
-            config["negative patch centers"],
-            nb=None,
-        )
-        if len(valid_list) > 0
-        else None
-    )
-    # Create datasets and data loaders
-    loaders, iterations = get_dataloaders(train_db=train_db, valid_db=valid_db, config=config, workers=workers)
-    # Create optimizer & scheduler
-    warmup_steps = iterations["train"] * config["warmEpochs"] if "warmEpochs" in config else 0
-    optimizer, scheduler = get_optimizer_scheduler(model=model, config=config, warmup_steps=warmup_steps)
-    # Create Trainer and start/resume training
+    workers = min(cfg.num_workers, os.cpu_count() or 1)
+    train_list, valid_list, _ = read_split(cfg.data.split_file, cfg.data.data_dir)
+    train_db = load_patients(train_list, cfg.data, "Training", workers)
+    valid_db = load_patients(valid_list, cfg.data, "Validation", workers)
+    loaders, iterations = get_dataloaders(train_db, valid_db, cfg)
+
+    optimizer = instantiate(cfg.optimizer, params=model.parameters(), _convert_="all")
+    warmup_steps = iterations["train"] * cfg.scheduler.get("warmup_epochs", 0)
+    lr_scheduler = create_lr_scheduler(optimizer, cfg.scheduler, epochs=cfg.epochs, warmup_steps=warmup_steps)
+
     trainer = create_trainer(
-        config, device, model, optimizer, scheduler, get_loss_criterion(config["loss"]), loaders, iterations
+        train_dir,
+        device=device,
+        model=model,
+        optimizer=optimizer,
+        lr_scheduler=lr_scheduler,
+        loss_criterion=get_loss_criterion(cfg.loss),
+        loaders=loaders,
+        max_iterations=iterations,
+        max_num_epochs=cfg.epochs,
+        save_every=cfg.save_every,
+        warmup_epochs=cfg.scheduler.get("warmup_epochs", 0),
+        mixed_precision=cfg.mixed_precision,
     )
     trainer.fit()
 

@@ -383,6 +383,8 @@ class YOLO_Orientation(nn.Module):
         nb_scales=1,
     ):
         super(YOLO_Orientation, self).__init__()
+        if isinstance(basic_module, str):  # as named in configs/model
+            basic_module = {"DoubleConv": DoubleConv, "ExtResNetBlock": ExtResNetBlock}[basic_module]
         if isinstance(f_maps, int):
             f_maps = number_of_features_per_level(init_channel_number=f_maps, num_levels=num_levels)
 
