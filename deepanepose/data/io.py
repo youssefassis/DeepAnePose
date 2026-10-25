@@ -60,13 +60,14 @@ def apply_transformation(elements, trans):
     return ni.affines.apply_affine(trans, elements)
 
 
-def read_nii_from_file(fname):
+def read_nii_from_file(fname, dtype=np.float32):
     """
-    Read a nii volume and return a 2-tuple with the voxel data (np array) and the voxel2metric tranform
+    Read a nii volume and return a 2-tuple with the voxel data (np array, float32 by default: half the memory of
+    nibabel's float64) and the voxel2metric tranform
     """
     assert os.path.isfile(fname), f"nii file not found {fname}"
     nv = ni.load(fname)
-    return nv.get_fdata(), nv.affine
+    return nv.get_fdata(dtype=dtype), nv.affine
 
 
 def save_nii_to_file(fname, vol, vox2met):
@@ -145,7 +146,6 @@ def read_patient_data(vol_file, ane_file, normalize=None):
     assert normalize in ["Linear", "Normal", None]
 
     d, affine = read_nii_from_file(vol_file)
-    d = d.astype(np.float64)
 
     s = None
     if ane_file is not None:  # Patient with no aneurysms (F.csv)
