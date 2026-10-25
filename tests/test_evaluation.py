@@ -1,19 +1,25 @@
-import matplotlib
+import os
+
 import pandas as pd
 
-matplotlib.use("Agg")
-
-from deepanepose.cli import evaluate  # noqa: E402
+from conftest import run_command
 
 
-def test_evaluate_script_writes_the_detection_table_and_figure(evaluation_fold, monkeypatch):
-    monkeypatch.setattr("sys.argv", ["evaluate.py", str(evaluation_fold) + "/"])
+def evaluate(train_dir, predictions_dir):
+    return run_command(
+        "evaluate", f"train_dir={train_dir}", f"predictions={predictions_dir}", env={**os.environ, "MPLBACKEND": "Agg"}
+    )
 
-    evaluate.main()
 
-    table = pd.read_csv(evaluation_fold / "detection_evaluation@0.1.csv")
+def test_evaluate_command_writes_the_detection_table_and_figure(evaluation_fold):
+    train_dir, predictions_dir = evaluation_fold
+
+    result = evaluate(train_dir, predictions_dir)
+
+    assert result.returncode == 0, result.stderr[-2000:]
+    table = pd.read_csv(predictions_dir / "detection_evaluation@0.1.csv")
     assert table["TP"].sum() == 2 and table["FP"].sum() == 3
-    assert (evaluation_fold / "Evaluation@0.1.png").is_file()
+    assert (predictions_dir / "Evaluation@0.1.png").is_file()
 
 
 def test_detections_are_matched_by_index_to_the_most_overlapping_aneurysm():
@@ -35,16 +41,25 @@ def test_detections_are_matched_by_index_to_the_most_overlapping_aneurysm():
     assert [fn["Center"][0] for fn in fns] == [0]
 
 
-def test_evaluate_script_without_false_or_true_positives(evaluation_fold, monkeypatch):
+def test_evaluate_command_without_false_or_true_positives(evaluation_fold):
     import json
 
+    train_dir, predictions_dir = evaluation_fold
     for kept in ("true positives", "nothing"):
-        for prediction_file in evaluation_fold.glob("*.json"):
+        for prediction_file in predictions_dir.glob("*.json"):
             detections = json.loads(prediction_file.read_text())
             keep = {k: d for k, d in detections.items() if d["confidence"] == 0.9} if kept == "true positives" else {}
             prediction_file.write_text(json.dumps(keep))
-        monkeypatch.setattr("sys.argv", ["evaluate.py", str(evaluation_fold)])
 
-        evaluate.main()
+        result = evaluate(train_dir, predictions_dir)
 
-        assert (evaluation_fold / "Evaluation@0.1.png").is_file()
+        assert result.returncode == 0, result.stderr[-2000:]
+        assert (predictions_dir / "Evaluation@0.1.png").is_file()
+
+
+def test_evaluate_command_reports_missing_predictions(evaluation_fold):
+    train_dir, _ = evaluation_fold
+
+    result = evaluate(train_dir, train_dir / "missing")
+
+    assert result.returncode != 0 and "No predictions" in result.stderr

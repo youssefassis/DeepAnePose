@@ -1,6 +1,59 @@
 import json
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
+from hydra import compose, initialize_config_dir
+from omegaconf import OmegaConf
+
+CONFIG_DIR = str(Path(__file__).parents[1] / "deepanepose" / "configs")
+
+# a tiny model trained on CPU on 16-voxel patches of 8 mm, without augmentation
+TINY_TRAINING = [
+    "name=exp",
+    "data.split_file=split.json",
+    "data.patch_shape=[16,16,16]",
+    "data.patch_size=[8,8,8]",
+    "model.f_maps=4",
+    "batch_size=2",
+    "drop_last=false",
+    "negative_patches=50",
+    "num_workers=0",
+    "augmentation.positive.duplicates=2",
+    *[
+        f"augmentation.{kind}.{aug}=null"
+        for kind in ("positive", "negative")
+        for aug in ("shift", "rotation", "distortion")
+    ],
+    "optimizer.momentum=0.9",
+    "optimizer.weight_decay=0",
+    "scheduler.warmup_epochs=1",
+    "scheduler.start_epoch=1",
+    "scheduler.stop_epoch=4",
+]
+
+
+def compose_config(name, overrides=()):
+    with initialize_config_dir(config_dir=CONFIG_DIR, version_base="1.3"):
+        return compose(config_name=name, overrides=list(overrides))
+
+
+def save_training_config(train_dir, cfg, launch_dir):
+    """Writes the .hydra folder of a training launched from launch_dir, as deepanepose-train does"""
+    (train_dir / ".hydra").mkdir(parents=True, exist_ok=True)
+    OmegaConf.save(cfg, train_dir / ".hydra" / "config.yaml")
+    OmegaConf.save({"hydra": {"runtime": {"cwd": str(launch_dir)}}}, train_dir / ".hydra" / "hydra.yaml")
+
+
+def run_command(module, *overrides, **kwargs):
+    """Runs a deepanepose.cli module as its installed command does"""
+    return subprocess.run(
+        [sys.executable, "-m", f"deepanepose.cli.{module}", *map(str, overrides)],
+        capture_output=True,
+        text=True,
+        **kwargs,
+    )
 
 
 @pytest.fixture
@@ -8,9 +61,10 @@ def evaluation_fold(tmp_path):
     """
     A trained fold ready for evaluation: P0001 and P0002 each have a 4mm aneurysm (aneurysms.csv, neck at x=-2) and two
     predictions (one on the aneurysm, one false positive); P0003 has no aneurysm and one false positive.
-    Returns the predictions directory.
+    Returns the training and predictions directories.
     """
-    predictions_dir = tmp_path / "Work" / "Fold1" / "Predictions" / "10_epochs"
+    train_dir = tmp_path / "Data" / "0Work" / "fold1"
+    predictions_dir = train_dir / "prediction" / "10_epochs"
     predictions_dir.mkdir(parents=True)
     patients = []
     for name, has_aneurysm in (("P0001", True), ("P0002", True), ("P0003", False)):
@@ -29,67 +83,28 @@ def evaluation_fold(tmp_path):
                 "confidence": 0.9,
             }
         (predictions_dir / f"{name}.json").write_text(json.dumps(detections))
-        patients.append(str(patient))
+        patients.append(name)
 
     split = {"training list": [], "validation list": patients[:1], "testing list": patients[1:]}
     (tmp_path / "fold1.json").write_text(json.dumps(split))
-    config = {"split_file": str(tmp_path / "fold1.json"), "truth file": "aneurysms.csv"}
-    (tmp_path / "Work" / "Fold1" / "ndl_config.json").write_text(json.dumps(config))
-    return predictions_dir
+    cfg = compose_config("train", ["data_dir=Data", "data.split_file=fold1.json", "name=fold1"])
+    save_training_config(train_dir, cfg, launch_dir=tmp_path)
+    return train_dir, predictions_dir
 
 
 @pytest.fixture
-def model_config(tmp_path):
-    """Config of a tiny model trained on CPU on 16-voxel patches of 8mm, without augmentation, with its checkpoints in tmp_path."""
-    return {
-        "patch_shape": [16, 16, 16],
-        "patch_size": [0.5, 0.5, 0.5],
-        "scales": [2],
-        "batch_size": 2,
-        "balancedbatch": True,
-        "drop_last": False,
-        "positive duplicates": 2,
-        "nb neg patches per patient": None,
-        "percentage of negative patches": 50,
-        "flip probability": 0.5,
-        "flip axes": [0],
-        **{
-            f"{kind} sample {aug}": None
-            for kind in ("positive", "negative")
-            for aug in ("shift", "rotation", "distortion", "scaling")
-        },
-        "model": "YOLO_Orientation",
-        "num parameters": 6,
-        "in_channels": 1,
-        "n_base_filters": 4,
-        "layer_order": "cbl",
-        "depth": 4,
-        "basic_module": "ExtResNetBlock",
-        "pool_type": "conv",
-        "loss": "YOLO_Regression_Cosine_Loss",
-        "optimizer": "SGD",
-        "momentum": 0.9,
-        "weight_decay": 0,
-        "lr": "WarmupPoly",
-        "warmEpochs": 1,
-        "initial_learning_rate": 1e-2,
-        "min_lr": 1e-4,
-        "start_epoch": 1,
-        "stop_epoch": 4,
-        "save model each n epoch": 10,
-        "model_file": str(tmp_path / "last_checkpoint.pytorch"),
-    }
-
-
-@pytest.fixture
-def train(model_config):
-    """Trains (or resumes training) the tiny model up to n_epochs on two 40mm patients and returns its trainer."""
+def train(tmp_path):
+    """
+    Trains (or resumes training) the tiny model up to n_epochs on two 40mm patients, with Hydra overrides of the
+    training config, in train_dir (tmp_path by default); returns its trainer.
+    """
     import numpy as np
+    from hydra.utils import instantiate
 
     from deepanepose.training.dataset import get_dataloaders
     from deepanepose.training.losses import get_loss_criterion
     from deepanepose.training.trainer import create_trainer
-    from deepanepose.utils import get_model, get_optimizer_scheduler
+    from deepanepose.utils import create_lr_scheduler, get_model
 
     rng = np.random.default_rng(0)
     patients = [
@@ -103,15 +118,26 @@ def train(model_config):
         for i in (1, 2)
     ]
 
-    def run(n_epochs, **overrides):
-        config = {**model_config, "n_epochs": n_epochs, **overrides}
-        loaders, iterations = get_dataloaders(patients, None, config, workers=0)
-        model = get_model(config)
-        optimizer, scheduler = get_optimizer_scheduler(
-            model, config, warmup_steps=iterations["train"] * config["warmEpochs"]
-        )
+    def run(n_epochs, *overrides, train_dir=tmp_path):
+        cfg = compose_config("train", [*TINY_TRAINING, f"data_dir={tmp_path}", f"epochs={n_epochs}", *overrides])
+        loaders, iterations = get_dataloaders(patients, None, cfg)
+        model = get_model(cfg.model)
+        optimizer = instantiate(cfg.optimizer, params=model.parameters(), _convert_="all")
+        warmup_epochs = cfg.scheduler.warmup_epochs
+        scheduler = create_lr_scheduler(optimizer, cfg.scheduler, cfg.epochs, iterations["train"] * warmup_epochs)
         trainer = create_trainer(
-            config, "cpu", model, optimizer, scheduler, get_loss_criterion(config["loss"]), loaders, iterations
+            str(train_dir),
+            "cpu",
+            model,
+            optimizer,
+            scheduler,
+            get_loss_criterion(cfg.loss),
+            loaders,
+            iterations,
+            max_num_epochs=cfg.epochs,
+            save_every=cfg.save_every,
+            warmup_epochs=warmup_epochs,
+            mixed_precision=cfg.mixed_precision,
         )
         trainer.fit()
         return trainer
